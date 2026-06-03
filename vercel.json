@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/finale_survey_app.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/finale_survey_app.html"
+    },
+    {
+      "source": "/survey",
+      "destination": "/finale_survey_app.html"
+    }
+  ]
+}
