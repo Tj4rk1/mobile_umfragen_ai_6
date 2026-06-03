@@ -143,6 +143,21 @@ p{margin:0 0 14px;color:#374151;line-height:1.55;font-size:clamp(15px,2.5vw,18px
 }
 .notice.warn{border-color:#fed7aa;background:#fff7ed;color:#7c2d12}
 .notice.success{border-color:#bbf7d0;background:#f0fdf4;color:#166534}
+.read-confirm{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  margin:14px 0 0;
+  padding:13px 14px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:#fff;
+  color:#24364a;
+  font-size:14px;
+  line-height:1.35;
+  font-weight:850;
+}
+.read-confirm input{width:20px;height:20px;margin:0;accent-color:var(--brand);flex:0 0 auto}
 .saving-card{text-align:center;min-height:42svh;display:grid;place-items:center}
 .saving-inner{max-width:520px;margin:auto}
 .saving-spinner{
@@ -612,6 +627,7 @@ tr:last-child td{border-bottom:0}
   .nav .primary{grid-column:1/-1;grid-row:1;width:100%}
   .nav .secondary{grid-column:1;grid-row:2;width:100%;min-height:42px;font-size:13px;padding:9px 12px}
   .nav-recall{display:block;grid-column:2;grid-row:2;width:100%;min-height:42px;font-size:13px;padding:9px 12px}
+  .nav:not(:has(.nav-recall)) .secondary{grid-column:1/-1}
   .card > .treatment-recall{display:none}
   .btn{min-height:48px;padding:11px 15px}
   .stimulus-card{border-radius:18px;box-shadow:0 10px 30px rgba(12,61,66,.08)}
@@ -1224,6 +1240,7 @@ function isLikertScreen(index){
 function currentRequiredKeys(){
   const index = appState.screenIndex;
   const questionGroups = getQuestionGroups();
+  if (index === 0) return ["intro_read_confirmed"];
   if (index >= 2 && index <= 5) return questionGroups[index - 2].items.map(item => item[0]);
   if (index === 6) return ["ai_detected"];
   if (index === 7) return ["age","gender","education","ai_usage"];
@@ -1412,6 +1429,11 @@ function renderSurvey(){
       <p>${renderRichText(settings.introBody)}</p>
       <p class="intro-privacy">${renderRichText(settings.introPrivacy)}</p>
       <div class="notice success"><strong>So läuft es:</strong> ${renderRichText(settings.introNotice)}</div>
+      <label class="read-confirm">
+        <input type="checkbox" data-checkbox="intro_read_confirmed" ${appState.answers.intro_read_confirmed ? "checked" : ""}>
+        <span>Ich habe alles aufmerksam gelesen.</span>
+      </label>
+      ${appState.message ? `<div class="notice warn">${escapeHtml(appState.message)}</div>` : ""}
       ${!hasSupabaseConfig ? `<div class="notice warn"><strong>Lokaler Modus:</strong> Supabase ist noch nicht konfiguriert. Balancing, CMS und Auswertung funktionieren in diesem Browser mit localStorage. Für die echte Erhebung bitte oben in der HTML-Datei ` + "`SUPABASE_URL`" + ` und ` + "`SUPABASE_ANON_KEY`" + ` eintragen und das SQL-Schema ausführen.</div>` : ""}
     </div>
   </section>`);
@@ -2065,6 +2087,12 @@ async function nextSurvey(){
     await exitAdminSurveyPreview();
     return;
   }
+  if (appState.screenIndex === 0 && !appState.answers.intro_read_confirmed){
+    appState.message = "Bitte lesen Sie den Text aufmerksam durch.";
+    renderSurvey();
+    window.scrollTo({top:document.body.scrollHeight, behavior:"smooth"});
+    return;
+  }
   if (appState.screenIndex < 7){
     appState.message = "";
     appState.screenIndex += 1;
@@ -2530,6 +2558,16 @@ document.addEventListener("input", event => {
     if (appState.participant && appState.mode !== "adminPreview") storeSet("answers:" + appState.participant.id, appState.answers);
     updateNextButtonState();
   }
+});
+
+document.addEventListener("change", event => {
+  const checkbox = event.target.closest("[data-checkbox]");
+  if (!checkbox) return;
+  appState.answers[checkbox.dataset.checkbox] = checkbox.checked ? "1" : "";
+  if (checkbox.checked && checkbox.dataset.checkbox === "intro_read_confirmed") appState.message = "";
+  if (appState.participant && appState.mode !== "adminPreview") storeSet("answers:" + appState.participant.id, appState.answers);
+  updateNextButtonState();
+  renderSurvey();
 });
 
 document.addEventListener("keydown", event => {
