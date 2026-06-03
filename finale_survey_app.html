@@ -124,6 +124,7 @@ p{margin:0 0 14px;color:#374151;line-height:1.55;font-size:clamp(15px,2.5vw,18px
 }
 .nav-inner{width:min(100%,var(--max));margin:0 auto;display:flex;gap:10px}
 .nav .primary{flex:1}
+.nav-recall{display:none}
 .notice{
   border:1px solid #bfdbfe;
   background:#eff6ff;
@@ -601,8 +602,11 @@ tr:last-child td{border-bottom:0}
   }
   .slider-copy{display:none}
   .nav{padding:10px max(10px,env(safe-area-inset-left)) calc(10px + env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-right))}
-  .nav-inner{flex-direction:column-reverse;gap:8px}
-  .nav .btn{width:100%}
+  .nav-inner{display:grid;grid-template-columns:minmax(0,.78fr) minmax(0,1.22fr);gap:8px}
+  .nav .primary{grid-column:1/-1;grid-row:1;width:100%}
+  .nav .secondary{grid-column:1;grid-row:2;width:100%;min-height:42px;font-size:13px;padding:9px 12px}
+  .nav-recall{display:block;grid-column:2;grid-row:2;width:100%;min-height:42px;font-size:13px;padding:9px 12px}
+  .card > .treatment-recall{display:none}
   .btn{min-height:48px;padding:11px 15px}
   .stimulus-card{border-radius:18px;box-shadow:0 10px 30px rgba(12,61,66,.08)}
   .stimulus-head{padding:11px 12px}
@@ -1512,8 +1516,10 @@ function renderSurvey(){
 
   html.push(`</main>`);
   if (screen < 10 || appState.mode === "adminPreview"){
+    const canRecallTreatment = Boolean(appState.condition && appState.treatment && ((screen >= 2 && screen <= 5) || screen === 7));
     html.push(`<nav class="nav"><div class="nav-inner">
       ${appState.mode === "adminPreview" && screen === 0 ? `<button class="btn secondary" data-admin-preview-exit>Admin</button>` : `<button class="btn secondary" data-nav="back" ${screen === 0 || screen >= 8 || appState.submitting ? "disabled" : ""}>Zurück</button>`}
+      ${canRecallTreatment ? `<button type="button" class="btn ghost nav-recall" data-show-treatment>Anzeige ansehen</button>` : ""}
       <button class="btn primary" data-nav="next" ${((!canGoNext() && ![0,1,8,9,10].includes(screen)) || appState.submitting) ? "disabled" : ""}>${screen === 7 ? "Abschließen" : screen === 9 ? "Teilnehmen & abschließen" : screen === 10 && appState.mode === "adminPreview" ? "Zurück zum Admin" : "Weiter"}</button>
     </div></nav>`);
   }
