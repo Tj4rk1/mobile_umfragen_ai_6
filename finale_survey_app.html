@@ -562,14 +562,51 @@ tr:last-child td{border-bottom:0}
   .builder-rail{border-bottom:1px solid var(--line)}
 }
 @media(max-width:420px){
-  .toprow{align-items:flex-start}
-  .progress-row{grid-template-columns:1fr}
-  .progress-meta{justify-content:space-between}
-  .likert-label{font-size:10px}
-  .likert-number{font-size:16px}
-  .likert-dot{width:24px;height:24px;border-width:4px}
-  .nav-inner{flex-direction:column-reverse}
+  :root{
+    --shadow:0 10px 28px rgba(12,61,66,.08);
+    --radius:16px;
+  }
+  .app-shell{padding:12px 10px 104px}
+  .topbar{margin-bottom:10px}
+  .topbar-inner{padding:0 0 4px}
+  .toprow{align-items:flex-start;gap:10px;margin-bottom:8px}
+  .product-title{font-size:18px;letter-spacing:-.025em}
+  .progress-meta{font-size:15px;line-height:1.12;max-width:145px;text-align:right}
+  .progress-row{grid-template-columns:1fr;gap:6px}
+  .progress-track{height:9px;gap:8px}
+  .progress-row strong{font-size:18px}
+  .card{padding:18px;border-radius:18px;box-shadow:0 12px 32px rgba(12,61,66,.08)}
+  h1{font-size:32px}
+  h2{font-size:28px;letter-spacing:-.03em}
+  p{font-size:18px;line-height:1.45}
+  .treatment-recall{justify-content:center;margin:0 0 18px}
+  .treatment-recall .btn{width:100%;min-height:46px;padding:10px 14px;font-size:15px}
+  .qgroup{gap:12px;margin-top:14px}
+  .question{padding:15px 12px;border-radius:17px;box-shadow:0 8px 22px rgba(12,61,66,.045)}
+  .question-head{margin-bottom:4px}
+  .qtitle{font-size:19px;line-height:1.22;text-align:left}
+  .likert-scale{margin-top:18px;padding-top:8px;column-gap:0}
+  .likert-scale:before{left:10%;right:10%;top:19px;height:3px}
+  .likert-option{padding:0 1px;gap:6px}
+  .likert-dot{width:22px;height:22px;border-width:4px;box-shadow:none}
+  .likert-option.selected .likert-dot{box-shadow:0 8px 18px rgba(17,24,32,.14)}
+  .likert-number{font-size:17px}
+  .likert-label{
+    font-size:9.5px;
+    line-height:1.08;
+    font-weight:850;
+    max-width:58px;
+    overflow-wrap:normal;
+    hyphens:none;
+  }
+  .slider-copy{display:none}
+  .nav{padding:10px max(10px,env(safe-area-inset-left)) calc(10px + env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-right))}
+  .nav-inner{flex-direction:column-reverse;gap:8px}
   .nav .btn{width:100%}
+  .btn{min-height:48px;padding:11px 15px}
+  .stimulus-card{border-radius:18px;box-shadow:0 10px 30px rgba(12,61,66,.08)}
+  .stimulus-head{padding:11px 12px}
+  .stimulus-body{padding:14px}
 }
 </style>
 </head>
