@@ -156,6 +156,44 @@ p{margin:0 0 14px;color:#374151;line-height:1.55;font-size:clamp(15px,2.5vw,18px
 .brand-tag{font-size:12px;text-transform:uppercase;letter-spacing:.1em;font-weight:950;color:var(--brand)}
 .stimulus-body{padding:18px}
 .stimulus-image{width:100%;display:block;max-height:56svh;object-fit:cover;background:#eef2f7}
+.treatment-recall{
+  display:flex;
+  justify-content:flex-end;
+  margin:0 0 16px;
+}
+.treatment-modal{
+  position:fixed;
+  inset:0;
+  z-index:90;
+  display:grid;
+  place-items:center;
+  padding:18px;
+  background:rgba(15,24,32,.48);
+  backdrop-filter:blur(10px);
+}
+.treatment-modal-panel{
+  width:min(100%,860px);
+  max-height:min(92svh,920px);
+  overflow:auto;
+  border-radius:24px;
+  background:#fff;
+  box-shadow:0 30px 90px rgba(15,24,32,.28);
+}
+.treatment-modal-head{
+  position:sticky;
+  top:0;
+  z-index:2;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  padding:14px 16px;
+  border-bottom:1px solid var(--line);
+  background:rgba(255,255,255,.94);
+  backdrop-filter:blur(12px);
+}
+.treatment-modal-title{font-weight:950;letter-spacing:-.02em}
+.treatment-modal-body{padding:16px}
 .text-treatment{
   min-height:300px;
   display:grid;
@@ -545,16 +583,16 @@ const CONDITIONS = [
 ];
 
 const DEFAULT_TREATMENTS = {
-  media_image_no_ai:{brandName:"Aurelis",brandTypeLabel:"Premiummarke",headline:"Mehr Ruhe für deine Haut.",body:"Bildmotiv der Markenkommunikation.",aiNotice:"Der gezeigte Inhalt wurde mithilfe generativer KI erstellt.",imageUrl:LOCAL_ASSET,imagePath:"",introChip:"5 Minuten · anonym · intuitiv",introHeadline:"Ihre Einschätzung zählt.",introBody:"Im Folgenden sehen Sie einen Inhalt aus der Markenkommunikation einer fiktiven Marke. Bitte betrachten Sie den Inhalt aufmerksam und beantworten Sie die Fragen spontan nach Ihrem persönlichen Eindruck.",introPrivacy:"Es gibt keine richtigen oder falschen Antworten. Ihre Angaben werden anonymisiert ausgewertet.",introNotice:"Inhalt ansehen, kurze Slider-Fragen beantworten, fertig. Sie müssen nicht lange nachdenken, der erste Eindruck ist genau richtig.",stimulusTitle:"Bitte betrachten Sie diesen Inhalt",stimulusText:"Für diese Seite ist keine Antwort erforderlich. Die folgenden Fragen beziehen sich auf den gezeigten Inhalt.",completionTitle:"Danke, Ihre Antworten wurden erfasst.",completionText:"Sie können das Fenster nun schließen."},
-  media_image_ai:{brandName:"Aurelis",brandTypeLabel:"Premiummarke",headline:"Mehr Ruhe für deine Haut.",body:"Bildmotiv der Markenkommunikation.",aiNotice:"Der gezeigte Inhalt wurde mithilfe generativer KI erstellt.",imageUrl:LOCAL_ASSET,imagePath:"",introChip:"5 Minuten · anonym · intuitiv",introHeadline:"Ihre Einschätzung zählt.",introBody:"Im Folgenden sehen Sie einen Inhalt aus der Markenkommunikation einer fiktiven Marke. Bitte betrachten Sie den Inhalt aufmerksam und beantworten Sie die Fragen spontan nach Ihrem persönlichen Eindruck.",introPrivacy:"Es gibt keine richtigen oder falschen Antworten. Ihre Angaben werden anonymisiert ausgewertet.",introNotice:"Inhalt ansehen, kurze Slider-Fragen beantworten, fertig. Sie müssen nicht lange nachdenken, der erste Eindruck ist genau richtig.",stimulusTitle:"Bitte betrachten Sie diesen Inhalt",stimulusText:"Für diese Seite ist keine Antwort erforderlich. Die folgenden Fragen beziehen sich auf den gezeigten Inhalt.",completionTitle:"Danke, Ihre Antworten wurden erfasst.",completionText:"Sie können das Fenster nun schließen."},
-  media_text_no_ai:{brandName:"Aurelis",brandTypeLabel:"DOOH Kampagne",headline:"Mehr Ruhe für deine Haut.",body:"DOOH-Motiv der Markenkommunikation.",aiNotice:"Der gezeigte Inhalt wurde mithilfe generativer KI erstellt.",imageUrl:DOOH_ASSET,imagePath:"",introChip:"5 Minuten · anonym · intuitiv",introHeadline:"Ihre Einschätzung zählt.",introBody:"Im Folgenden sehen Sie einen Inhalt aus der Markenkommunikation einer fiktiven Marke. Bitte betrachten Sie den Inhalt aufmerksam und beantworten Sie die Fragen spontan nach Ihrem persönlichen Eindruck.",introPrivacy:"Es gibt keine richtigen oder falschen Antworten. Ihre Angaben werden anonymisiert ausgewertet.",introNotice:"Inhalt ansehen, kurze Slider-Fragen beantworten, fertig. Sie müssen nicht lange nachdenken, der erste Eindruck ist genau richtig.",stimulusTitle:"Bitte betrachten Sie diesen Inhalt",stimulusText:"Für diese Seite ist keine Antwort erforderlich. Die folgenden Fragen beziehen sich auf den gezeigten Inhalt.",completionTitle:"Danke, Ihre Antworten wurden erfasst.",completionText:"Sie können das Fenster nun schließen."},
-  media_text_ai:{brandName:"Aurelis",brandTypeLabel:"DOOH Kampagne",headline:"Mehr Ruhe für deine Haut.",body:"DOOH-Motiv der Markenkommunikation.",aiNotice:"Der gezeigte Inhalt wurde mithilfe generativer KI erstellt.",imageUrl:DOOH_ASSET,imagePath:"",introChip:"5 Minuten · anonym · intuitiv",introHeadline:"Ihre Einschätzung zählt.",introBody:"Im Folgenden sehen Sie einen Inhalt aus der Markenkommunikation einer fiktiven Marke. Bitte betrachten Sie den Inhalt aufmerksam und beantworten Sie die Fragen spontan nach Ihrem persönlichen Eindruck.",introPrivacy:"Es gibt keine richtigen oder falschen Antworten. Ihre Angaben werden anonymisiert ausgewertet.",introNotice:"Inhalt ansehen, kurze Slider-Fragen beantworten, fertig. Sie müssen nicht lange nachdenken, der erste Eindruck ist genau richtig.",stimulusTitle:"Bitte betrachten Sie diesen Inhalt",stimulusText:"Für diese Seite ist keine Antwort erforderlich. Die folgenden Fragen beziehen sich auf den gezeigten Inhalt.",completionTitle:"Danke, Ihre Antworten wurden erfasst.",completionText:"Sie können das Fenster nun schließen."},
-  brand_fmcg_no_ai:{brandName:"Aurelis Daily",brandTypeLabel:"FMCG / Alltagsmarke",headline:"Pflege, die jeden Tag einfach funktioniert.",body:"Aurelis Daily bietet unkomplizierte Hautpflege für die tägliche Routine. Leicht verständlich, angenehm in der Anwendung und gemacht für ein frisches Hautgefühl im Alltag.",aiNotice:"Der gezeigte Inhalt wurde mithilfe generativer KI erstellt.",imageUrl:LOCAL_ASSET,imagePath:"",introChip:"5 Minuten · anonym · intuitiv",introHeadline:"Ihre Einschätzung zählt.",introBody:"Im Folgenden sehen Sie einen Inhalt aus der Markenkommunikation einer fiktiven Marke. Bitte betrachten Sie den Inhalt aufmerksam und beantworten Sie die Fragen spontan nach Ihrem persönlichen Eindruck.",introPrivacy:"Es gibt keine richtigen oder falschen Antworten. Ihre Angaben werden anonymisiert ausgewertet.",introNotice:"Inhalt ansehen, kurze Slider-Fragen beantworten, fertig. Sie müssen nicht lange nachdenken, der erste Eindruck ist genau richtig.",stimulusTitle:"Bitte betrachten Sie diesen Inhalt",stimulusText:"Für diese Seite ist keine Antwort erforderlich. Die folgenden Fragen beziehen sich auf den gezeigten Inhalt.",completionTitle:"Danke, Ihre Antworten wurden erfasst.",completionText:"Sie können das Fenster nun schließen."},
-  brand_fmcg_ai:{brandName:"Aurelis Daily",brandTypeLabel:"FMCG / Alltagsmarke",headline:"Pflege, die jeden Tag einfach funktioniert.",body:"Aurelis Daily bietet unkomplizierte Hautpflege für die tägliche Routine. Leicht verständlich, angenehm in der Anwendung und gemacht für ein frisches Hautgefühl im Alltag.",aiNotice:"Der gezeigte Inhalt wurde mithilfe generativer KI erstellt.",imageUrl:LOCAL_ASSET,imagePath:"",introChip:"5 Minuten · anonym · intuitiv",introHeadline:"Ihre Einschätzung zählt.",introBody:"Im Folgenden sehen Sie einen Inhalt aus der Markenkommunikation einer fiktiven Marke. Bitte betrachten Sie den Inhalt aufmerksam und beantworten Sie die Fragen spontan nach Ihrem persönlichen Eindruck.",introPrivacy:"Es gibt keine richtigen oder falschen Antworten. Ihre Angaben werden anonymisiert ausgewertet.",introNotice:"Inhalt ansehen, kurze Slider-Fragen beantworten, fertig. Sie müssen nicht lange nachdenken, der erste Eindruck ist genau richtig.",stimulusTitle:"Bitte betrachten Sie diesen Inhalt",stimulusText:"Für diese Seite ist keine Antwort erforderlich. Die folgenden Fragen beziehen sich auf den gezeigten Inhalt.",completionTitle:"Danke, Ihre Antworten wurden erfasst.",completionText:"Sie können das Fenster nun schließen."},
-  brand_premium_no_ai:{brandName:"Aurelis",brandTypeLabel:"Premiummarke",headline:"Mehr Ruhe für deine Haut.",body:"Aurelis verbindet hochwertige Formulierungen mit einer Pflegeroutine, die sich bewusst und angenehm anfühlt. Für Haut, die gepflegter, ausgeglichener und frischer wirken soll.",aiNotice:"Der gezeigte Inhalt wurde mithilfe generativer KI erstellt.",imageUrl:LOCAL_ASSET,imagePath:"",introChip:"5 Minuten · anonym · intuitiv",introHeadline:"Ihre Einschätzung zählt.",introBody:"Im Folgenden sehen Sie einen Inhalt aus der Markenkommunikation einer fiktiven Marke. Bitte betrachten Sie den Inhalt aufmerksam und beantworten Sie die Fragen spontan nach Ihrem persönlichen Eindruck.",introPrivacy:"Es gibt keine richtigen oder falschen Antworten. Ihre Angaben werden anonymisiert ausgewertet.",introNotice:"Inhalt ansehen, kurze Slider-Fragen beantworten, fertig. Sie müssen nicht lange nachdenken, der erste Eindruck ist genau richtig.",stimulusTitle:"Bitte betrachten Sie diesen Inhalt",stimulusText:"Für diese Seite ist keine Antwort erforderlich. Die folgenden Fragen beziehen sich auf den gezeigten Inhalt.",completionTitle:"Danke, Ihre Antworten wurden erfasst.",completionText:"Sie können das Fenster nun schließen."},
-  brand_premium_ai:{brandName:"Aurelis",brandTypeLabel:"Premiummarke",headline:"Mehr Ruhe für deine Haut.",body:"Aurelis verbindet hochwertige Formulierungen mit einer Pflegeroutine, die sich bewusst und angenehm anfühlt. Für Haut, die gepflegter, ausgeglichener und frischer wirken soll.",aiNotice:"Der gezeigte Inhalt wurde mithilfe generativer KI erstellt.",imageUrl:LOCAL_ASSET,imagePath:"",introChip:"5 Minuten · anonym · intuitiv",introHeadline:"Ihre Einschätzung zählt.",introBody:"Im Folgenden sehen Sie einen Inhalt aus der Markenkommunikation einer fiktiven Marke. Bitte betrachten Sie den Inhalt aufmerksam und beantworten Sie die Fragen spontan nach Ihrem persönlichen Eindruck.",introPrivacy:"Es gibt keine richtigen oder falschen Antworten. Ihre Angaben werden anonymisiert ausgewertet.",introNotice:"Inhalt ansehen, kurze Slider-Fragen beantworten, fertig. Sie müssen nicht lange nachdenken, der erste Eindruck ist genau richtig.",stimulusTitle:"Bitte betrachten Sie diesen Inhalt",stimulusText:"Für diese Seite ist keine Antwort erforderlich. Die folgenden Fragen beziehen sich auf den gezeigten Inhalt.",completionTitle:"Danke, Ihre Antworten wurden erfasst.",completionText:"Sie können das Fenster nun schließen."},
-  brand_luxury_no_ai:{brandName:"Aurelis Maison",brandTypeLabel:"Luxusmarke",headline:"Rituale für Hautpflege mit besonderem Anspruch.",body:"Aurelis Maison inszeniert Pflege als exklusives Ritual. Edle Formulierungen, ausgewählte Inhaltsstoffe und eine reduzierte Markenwelt schaffen ein Gefühl von Wertigkeit, Ruhe und Besonderheit.",aiNotice:"Der gezeigte Inhalt wurde mithilfe generativer KI erstellt.",imageUrl:LOCAL_ASSET,imagePath:"",introChip:"5 Minuten · anonym · intuitiv",introHeadline:"Ihre Einschätzung zählt.",introBody:"Im Folgenden sehen Sie einen Inhalt aus der Markenkommunikation einer fiktiven Marke. Bitte betrachten Sie den Inhalt aufmerksam und beantworten Sie die Fragen spontan nach Ihrem persönlichen Eindruck.",introPrivacy:"Es gibt keine richtigen oder falschen Antworten. Ihre Angaben werden anonymisiert ausgewertet.",introNotice:"Inhalt ansehen, kurze Slider-Fragen beantworten, fertig. Sie müssen nicht lange nachdenken, der erste Eindruck ist genau richtig.",stimulusTitle:"Bitte betrachten Sie diesen Inhalt",stimulusText:"Für diese Seite ist keine Antwort erforderlich. Die folgenden Fragen beziehen sich auf den gezeigten Inhalt.",completionTitle:"Danke, Ihre Antworten wurden erfasst.",completionText:"Sie können das Fenster nun schließen."},
-  brand_luxury_ai:{brandName:"Aurelis Maison",brandTypeLabel:"Luxusmarke",headline:"Rituale für Hautpflege mit besonderem Anspruch.",body:"Aurelis Maison inszeniert Pflege als exklusives Ritual. Edle Formulierungen, ausgewählte Inhaltsstoffe und eine reduzierte Markenwelt schaffen ein Gefühl von Wertigkeit, Ruhe und Besonderheit.",aiNotice:"Der gezeigte Inhalt wurde mithilfe generativer KI erstellt.",imageUrl:LOCAL_ASSET,imagePath:"",introChip:"5 Minuten · anonym · intuitiv",introHeadline:"Ihre Einschätzung zählt.",introBody:"Im Folgenden sehen Sie einen Inhalt aus der Markenkommunikation einer fiktiven Marke. Bitte betrachten Sie den Inhalt aufmerksam und beantworten Sie die Fragen spontan nach Ihrem persönlichen Eindruck.",introPrivacy:"Es gibt keine richtigen oder falschen Antworten. Ihre Angaben werden anonymisiert ausgewertet.",introNotice:"Inhalt ansehen, kurze Slider-Fragen beantworten, fertig. Sie müssen nicht lange nachdenken, der erste Eindruck ist genau richtig.",stimulusTitle:"Bitte betrachten Sie diesen Inhalt",stimulusText:"Für diese Seite ist keine Antwort erforderlich. Die folgenden Fragen beziehen sich auf den gezeigten Inhalt.",completionTitle:"Danke, Ihre Antworten wurden erfasst.",completionText:"Sie können das Fenster nun schließen."}
+  media_image_no_ai:{brandName:"Aurelis",brandTypeLabel:"Premiummarke",headline:"Mehr Ruhe für deine Haut.",body:"Bildmotiv der Markenkommunikation.",aiNotice:"Der gezeigte Inhalt wurde mithilfe generativer KI erstellt.",imageUrl:LOCAL_ASSET,imagePath:"",introChip:"5 Minuten · anonym · intuitiv",introHeadline:"Ihre Einschätzung zählt.",introBody:"Im Folgenden sehen Sie einen Inhalt aus der Markenkommunikation einer fiktiven Marke. Bitte betrachten Sie den Inhalt aufmerksam und beantworten Sie die Fragen spontan nach Ihrem persönlichen Eindruck.",introPrivacy:"Es gibt keine richtigen oder falschen Antworten. Ihre Angaben werden anonymisiert ausgewertet.",introNotice:"Inhalt ansehen, kurze Fragen beantworten, fertig. Sie müssen nicht lange nachdenken, der erste Eindruck ist genau richtig.",stimulusTitle:"Bitte betrachten Sie diesen Inhalt",stimulusText:"Für diese Seite ist keine Antwort erforderlich. Die folgenden Fragen beziehen sich auf den gezeigten Inhalt.",completionTitle:"Danke, Ihre Antworten wurden erfasst.",completionText:"Sie können das Fenster nun schließen."},
+  media_image_ai:{brandName:"Aurelis",brandTypeLabel:"Premiummarke",headline:"Mehr Ruhe für deine Haut.",body:"Bildmotiv der Markenkommunikation.",aiNotice:"Der gezeigte Inhalt wurde mithilfe generativer KI erstellt.",imageUrl:LOCAL_ASSET,imagePath:"",introChip:"5 Minuten · anonym · intuitiv",introHeadline:"Ihre Einschätzung zählt.",introBody:"Im Folgenden sehen Sie einen Inhalt aus der Markenkommunikation einer fiktiven Marke. Bitte betrachten Sie den Inhalt aufmerksam und beantworten Sie die Fragen spontan nach Ihrem persönlichen Eindruck.",introPrivacy:"Es gibt keine richtigen oder falschen Antworten. Ihre Angaben werden anonymisiert ausgewertet.",introNotice:"Inhalt ansehen, kurze Fragen beantworten, fertig. Sie müssen nicht lange nachdenken, der erste Eindruck ist genau richtig.",stimulusTitle:"Bitte betrachten Sie diesen Inhalt",stimulusText:"Für diese Seite ist keine Antwort erforderlich. Die folgenden Fragen beziehen sich auf den gezeigten Inhalt.",completionTitle:"Danke, Ihre Antworten wurden erfasst.",completionText:"Sie können das Fenster nun schließen."},
+  media_text_no_ai:{brandName:"Aurelis",brandTypeLabel:"DOOH Kampagne",headline:"Mehr Ruhe für deine Haut.",body:"DOOH-Motiv der Markenkommunikation.",aiNotice:"Der gezeigte Inhalt wurde mithilfe generativer KI erstellt.",imageUrl:DOOH_ASSET,imagePath:"",introChip:"5 Minuten · anonym · intuitiv",introHeadline:"Ihre Einschätzung zählt.",introBody:"Im Folgenden sehen Sie einen Inhalt aus der Markenkommunikation einer fiktiven Marke. Bitte betrachten Sie den Inhalt aufmerksam und beantworten Sie die Fragen spontan nach Ihrem persönlichen Eindruck.",introPrivacy:"Es gibt keine richtigen oder falschen Antworten. Ihre Angaben werden anonymisiert ausgewertet.",introNotice:"Inhalt ansehen, kurze Fragen beantworten, fertig. Sie müssen nicht lange nachdenken, der erste Eindruck ist genau richtig.",stimulusTitle:"Bitte betrachten Sie diesen Inhalt",stimulusText:"Für diese Seite ist keine Antwort erforderlich. Die folgenden Fragen beziehen sich auf den gezeigten Inhalt.",completionTitle:"Danke, Ihre Antworten wurden erfasst.",completionText:"Sie können das Fenster nun schließen."},
+  media_text_ai:{brandName:"Aurelis",brandTypeLabel:"DOOH Kampagne",headline:"Mehr Ruhe für deine Haut.",body:"DOOH-Motiv der Markenkommunikation.",aiNotice:"Der gezeigte Inhalt wurde mithilfe generativer KI erstellt.",imageUrl:DOOH_ASSET,imagePath:"",introChip:"5 Minuten · anonym · intuitiv",introHeadline:"Ihre Einschätzung zählt.",introBody:"Im Folgenden sehen Sie einen Inhalt aus der Markenkommunikation einer fiktiven Marke. Bitte betrachten Sie den Inhalt aufmerksam und beantworten Sie die Fragen spontan nach Ihrem persönlichen Eindruck.",introPrivacy:"Es gibt keine richtigen oder falschen Antworten. Ihre Angaben werden anonymisiert ausgewertet.",introNotice:"Inhalt ansehen, kurze Fragen beantworten, fertig. Sie müssen nicht lange nachdenken, der erste Eindruck ist genau richtig.",stimulusTitle:"Bitte betrachten Sie diesen Inhalt",stimulusText:"Für diese Seite ist keine Antwort erforderlich. Die folgenden Fragen beziehen sich auf den gezeigten Inhalt.",completionTitle:"Danke, Ihre Antworten wurden erfasst.",completionText:"Sie können das Fenster nun schließen."},
+  brand_fmcg_no_ai:{brandName:"Aurelis Daily",brandTypeLabel:"FMCG / Alltagsmarke",headline:"Pflege, die jeden Tag einfach funktioniert.",body:"Aurelis Daily bietet unkomplizierte Hautpflege für die tägliche Routine. Leicht verständlich, angenehm in der Anwendung und gemacht für ein frisches Hautgefühl im Alltag.",aiNotice:"Der gezeigte Inhalt wurde mithilfe generativer KI erstellt.",imageUrl:LOCAL_ASSET,imagePath:"",introChip:"5 Minuten · anonym · intuitiv",introHeadline:"Ihre Einschätzung zählt.",introBody:"Im Folgenden sehen Sie einen Inhalt aus der Markenkommunikation einer fiktiven Marke. Bitte betrachten Sie den Inhalt aufmerksam und beantworten Sie die Fragen spontan nach Ihrem persönlichen Eindruck.",introPrivacy:"Es gibt keine richtigen oder falschen Antworten. Ihre Angaben werden anonymisiert ausgewertet.",introNotice:"Inhalt ansehen, kurze Fragen beantworten, fertig. Sie müssen nicht lange nachdenken, der erste Eindruck ist genau richtig.",stimulusTitle:"Bitte betrachten Sie diesen Inhalt",stimulusText:"Für diese Seite ist keine Antwort erforderlich. Die folgenden Fragen beziehen sich auf den gezeigten Inhalt.",completionTitle:"Danke, Ihre Antworten wurden erfasst.",completionText:"Sie können das Fenster nun schließen."},
+  brand_fmcg_ai:{brandName:"Aurelis Daily",brandTypeLabel:"FMCG / Alltagsmarke",headline:"Pflege, die jeden Tag einfach funktioniert.",body:"Aurelis Daily bietet unkomplizierte Hautpflege für die tägliche Routine. Leicht verständlich, angenehm in der Anwendung und gemacht für ein frisches Hautgefühl im Alltag.",aiNotice:"Der gezeigte Inhalt wurde mithilfe generativer KI erstellt.",imageUrl:LOCAL_ASSET,imagePath:"",introChip:"5 Minuten · anonym · intuitiv",introHeadline:"Ihre Einschätzung zählt.",introBody:"Im Folgenden sehen Sie einen Inhalt aus der Markenkommunikation einer fiktiven Marke. Bitte betrachten Sie den Inhalt aufmerksam und beantworten Sie die Fragen spontan nach Ihrem persönlichen Eindruck.",introPrivacy:"Es gibt keine richtigen oder falschen Antworten. Ihre Angaben werden anonymisiert ausgewertet.",introNotice:"Inhalt ansehen, kurze Fragen beantworten, fertig. Sie müssen nicht lange nachdenken, der erste Eindruck ist genau richtig.",stimulusTitle:"Bitte betrachten Sie diesen Inhalt",stimulusText:"Für diese Seite ist keine Antwort erforderlich. Die folgenden Fragen beziehen sich auf den gezeigten Inhalt.",completionTitle:"Danke, Ihre Antworten wurden erfasst.",completionText:"Sie können das Fenster nun schließen."},
+  brand_premium_no_ai:{brandName:"Aurelis",brandTypeLabel:"Premiummarke",headline:"Mehr Ruhe für deine Haut.",body:"Aurelis verbindet hochwertige Formulierungen mit einer Pflegeroutine, die sich bewusst und angenehm anfühlt. Für Haut, die gepflegter, ausgeglichener und frischer wirken soll.",aiNotice:"Der gezeigte Inhalt wurde mithilfe generativer KI erstellt.",imageUrl:LOCAL_ASSET,imagePath:"",introChip:"5 Minuten · anonym · intuitiv",introHeadline:"Ihre Einschätzung zählt.",introBody:"Im Folgenden sehen Sie einen Inhalt aus der Markenkommunikation einer fiktiven Marke. Bitte betrachten Sie den Inhalt aufmerksam und beantworten Sie die Fragen spontan nach Ihrem persönlichen Eindruck.",introPrivacy:"Es gibt keine richtigen oder falschen Antworten. Ihre Angaben werden anonymisiert ausgewertet.",introNotice:"Inhalt ansehen, kurze Fragen beantworten, fertig. Sie müssen nicht lange nachdenken, der erste Eindruck ist genau richtig.",stimulusTitle:"Bitte betrachten Sie diesen Inhalt",stimulusText:"Für diese Seite ist keine Antwort erforderlich. Die folgenden Fragen beziehen sich auf den gezeigten Inhalt.",completionTitle:"Danke, Ihre Antworten wurden erfasst.",completionText:"Sie können das Fenster nun schließen."},
+  brand_premium_ai:{brandName:"Aurelis",brandTypeLabel:"Premiummarke",headline:"Mehr Ruhe für deine Haut.",body:"Aurelis verbindet hochwertige Formulierungen mit einer Pflegeroutine, die sich bewusst und angenehm anfühlt. Für Haut, die gepflegter, ausgeglichener und frischer wirken soll.",aiNotice:"Der gezeigte Inhalt wurde mithilfe generativer KI erstellt.",imageUrl:LOCAL_ASSET,imagePath:"",introChip:"5 Minuten · anonym · intuitiv",introHeadline:"Ihre Einschätzung zählt.",introBody:"Im Folgenden sehen Sie einen Inhalt aus der Markenkommunikation einer fiktiven Marke. Bitte betrachten Sie den Inhalt aufmerksam und beantworten Sie die Fragen spontan nach Ihrem persönlichen Eindruck.",introPrivacy:"Es gibt keine richtigen oder falschen Antworten. Ihre Angaben werden anonymisiert ausgewertet.",introNotice:"Inhalt ansehen, kurze Fragen beantworten, fertig. Sie müssen nicht lange nachdenken, der erste Eindruck ist genau richtig.",stimulusTitle:"Bitte betrachten Sie diesen Inhalt",stimulusText:"Für diese Seite ist keine Antwort erforderlich. Die folgenden Fragen beziehen sich auf den gezeigten Inhalt.",completionTitle:"Danke, Ihre Antworten wurden erfasst.",completionText:"Sie können das Fenster nun schließen."},
+  brand_luxury_no_ai:{brandName:"Aurelis Maison",brandTypeLabel:"Luxusmarke",headline:"Rituale für Hautpflege mit besonderem Anspruch.",body:"Aurelis Maison inszeniert Pflege als exklusives Ritual. Edle Formulierungen, ausgewählte Inhaltsstoffe und eine reduzierte Markenwelt schaffen ein Gefühl von Wertigkeit, Ruhe und Besonderheit.",aiNotice:"Der gezeigte Inhalt wurde mithilfe generativer KI erstellt.",imageUrl:LOCAL_ASSET,imagePath:"",introChip:"5 Minuten · anonym · intuitiv",introHeadline:"Ihre Einschätzung zählt.",introBody:"Im Folgenden sehen Sie einen Inhalt aus der Markenkommunikation einer fiktiven Marke. Bitte betrachten Sie den Inhalt aufmerksam und beantworten Sie die Fragen spontan nach Ihrem persönlichen Eindruck.",introPrivacy:"Es gibt keine richtigen oder falschen Antworten. Ihre Angaben werden anonymisiert ausgewertet.",introNotice:"Inhalt ansehen, kurze Fragen beantworten, fertig. Sie müssen nicht lange nachdenken, der erste Eindruck ist genau richtig.",stimulusTitle:"Bitte betrachten Sie diesen Inhalt",stimulusText:"Für diese Seite ist keine Antwort erforderlich. Die folgenden Fragen beziehen sich auf den gezeigten Inhalt.",completionTitle:"Danke, Ihre Antworten wurden erfasst.",completionText:"Sie können das Fenster nun schließen."},
+  brand_luxury_ai:{brandName:"Aurelis Maison",brandTypeLabel:"Luxusmarke",headline:"Rituale für Hautpflege mit besonderem Anspruch.",body:"Aurelis Maison inszeniert Pflege als exklusives Ritual. Edle Formulierungen, ausgewählte Inhaltsstoffe und eine reduzierte Markenwelt schaffen ein Gefühl von Wertigkeit, Ruhe und Besonderheit.",aiNotice:"Der gezeigte Inhalt wurde mithilfe generativer KI erstellt.",imageUrl:LOCAL_ASSET,imagePath:"",introChip:"5 Minuten · anonym · intuitiv",introHeadline:"Ihre Einschätzung zählt.",introBody:"Im Folgenden sehen Sie einen Inhalt aus der Markenkommunikation einer fiktiven Marke. Bitte betrachten Sie den Inhalt aufmerksam und beantworten Sie die Fragen spontan nach Ihrem persönlichen Eindruck.",introPrivacy:"Es gibt keine richtigen oder falschen Antworten. Ihre Angaben werden anonymisiert ausgewertet.",introNotice:"Inhalt ansehen, kurze Fragen beantworten, fertig. Sie müssen nicht lange nachdenken, der erste Eindruck ist genau richtig.",stimulusTitle:"Bitte betrachten Sie diesen Inhalt",stimulusText:"Für diese Seite ist keine Antwort erforderlich. Die folgenden Fragen beziehen sich auf den gezeigten Inhalt.",completionTitle:"Danke, Ihre Antworten wurden erfasst.",completionText:"Sie können das Fenster nun schließen."}
 };
 
 const DEFAULT_SETTINGS = {
@@ -568,7 +606,7 @@ const DEFAULT_SETTINGS = {
   introHeadline:"Ihre Einschätzung zählt.",
   introBody:"Im Folgenden sehen Sie einen Inhalt aus der Markenkommunikation einer fiktiven Marke. Bitte betrachten Sie den Inhalt aufmerksam und beantworten Sie die Fragen spontan nach Ihrem persönlichen Eindruck.",
   introPrivacy:"Es gibt keine richtigen oder falschen Antworten. Ihre Angaben werden anonymisiert ausgewertet.",
-  introNotice:"Inhalt ansehen, kurze Slider-Fragen beantworten, fertig. Sie müssen nicht lange nachdenken, der erste Eindruck ist genau richtig.",
+  introNotice:"Inhalt ansehen, kurze Fragen beantworten, fertig. Sie müssen nicht lange nachdenken, der erste Eindruck ist genau richtig.",
   stimulusTitle:"Bitte betrachten Sie diesen Inhalt",
   stimulusText:"Für diese Seite ist keine Antwort erforderlich. Die folgenden Fragen beziehen sich auf den gezeigten Inhalt.",
   completionTitle:"Danke, Ihre Antworten wurden erfasst.",
@@ -632,6 +670,7 @@ const appState = {
   settings:{...DEFAULT_SETTINGS},
   cmsConditionId:"media_image_no_ai",
   confettiSeed:"",
+  showTreatmentModal:false,
   message:""
 };
 
@@ -690,7 +729,7 @@ function renderRichText(value){
 function updateNextButtonState(){
   const nextButton = document.querySelector('[data-nav="next"]');
   if (!nextButton) return;
-  const blocked = ((!canGoNext() && ![0,1,8,10].includes(appState.screenIndex)) || (appState.screenIndex === 9 && !hasValidRaffleEmail()) || appState.submitting);
+  const blocked = ((!canGoNext() && ![0,1,8,9,10].includes(appState.screenIndex)) || appState.submitting);
   nextButton.disabled = blocked;
 }
 
@@ -1208,8 +1247,8 @@ function renderTreatment(condition, treatment, compact=false){
         </div>
       ` : ""}
       ${showImage ? editable
-        ? `<button type="button" class="inline-image-edit" data-inline-image><img class="stimulus-image" src="${escapeHtml(image)}" alt="${escapeHtml(treatment.brandName)} Treatment"></button>`
-        : `<img class="stimulus-image" src="${escapeHtml(image)}" alt="${escapeHtml(treatment.brandName)} Treatment">`
+        ? `<button type="button" class="inline-image-edit" data-inline-image><img class="stimulus-image" src="${escapeHtml(image)}" alt="Anzeige von ${escapeHtml(treatment.brandName)}"></button>`
+        : `<img class="stimulus-image" src="${escapeHtml(image)}" alt="Anzeige von ${escapeHtml(treatment.brandName)}">`
       : ""}
       ${showImage ? `
         <div class="stimulus-body">
@@ -1247,6 +1286,28 @@ function renderChoiceGrid(key, options){
   return `
     <div class="choicegrid">
       ${options.map(option => `<button type="button" class="choice ${value === option ? "selected" : ""}" data-answer="${escapeHtml(key)}" data-value="${escapeHtml(option)}">${escapeHtml(option)}</button>`).join("")}
+    </div>
+  `;
+}
+
+function renderTreatmentRecallButton(){
+  if (!appState.condition || !appState.treatment) return "";
+  return `<div class="treatment-recall"><button type="button" class="btn ghost" data-show-treatment>Anzeige nochmal ansehen</button></div>`;
+}
+
+function renderTreatmentModal(){
+  if (!appState.showTreatmentModal || !appState.condition || !appState.treatment) return "";
+  return `
+    <div class="treatment-modal" data-close-treatment>
+      <div class="treatment-modal-panel" role="dialog" aria-modal="true" aria-label="Anzeige erneut ansehen" data-treatment-modal-panel>
+        <div class="treatment-modal-head">
+          <div class="treatment-modal-title">Anzeige ansehen</div>
+          <button type="button" class="btn secondary" data-close-treatment>Schließen</button>
+        </div>
+        <div class="treatment-modal-body">
+          ${renderTreatment(appState.condition, appState.treatment)}
+        </div>
+      </div>
     </div>
   `;
 }
@@ -1291,6 +1352,7 @@ function renderSurvey(){
     const screenIndex = groupIndex + 2;
     html.push(`<section class="screen ${screen === screenIndex ? "active" : ""}">
       <div class="card">
+        ${renderTreatmentRecallButton()}
         <h2>${escapeHtml(group.title)}</h2>
         <p>${escapeHtml(group.intro)}</p>
         <div class="qgroup">
@@ -1324,6 +1386,7 @@ function renderSurvey(){
 
   html.push(`<section class="screen ${screen === 7 ? "active" : ""}">
     <div class="card">
+      ${renderTreatmentRecallButton()}
       <h2>Angaben zu Ihrer Person</h2>
       ${appState.message ? `<div class="notice warn">${escapeHtml(appState.message)}</div>` : ""}
       <div class="qgroup">
@@ -1380,10 +1443,13 @@ function renderSurvey(){
   </section>`);
 
   html.push(`</main>`);
-  html.push(`<nav class="nav"><div class="nav-inner">
-    ${appState.mode === "adminPreview" && screen === 0 ? `<button class="btn secondary" data-admin-preview-exit>Admin</button>` : `<button class="btn secondary" data-nav="back" ${screen === 0 || appState.submitting ? "disabled" : ""}>Zurück</button>`}
-    <button class="btn primary" data-nav="next" ${((!canGoNext() && ![0,1,8,10].includes(screen)) || (screen === 9 && !hasValidRaffleEmail()) || appState.submitting) ? "disabled" : ""}>${screen === 7 ? "Abschließen" : screen === 9 ? "Teilnehmen & abschließen" : screen === 10 && appState.mode === "adminPreview" ? "Zurück zum Admin" : screen === 10 ? "Fertig" : "Weiter"}</button>
-  </div></nav>`);
+  if (screen < 10 || appState.mode === "adminPreview"){
+    html.push(`<nav class="nav"><div class="nav-inner">
+      ${appState.mode === "adminPreview" && screen === 0 ? `<button class="btn secondary" data-admin-preview-exit>Admin</button>` : `<button class="btn secondary" data-nav="back" ${screen === 0 || screen >= 8 || appState.submitting ? "disabled" : ""}>Zurück</button>`}
+      <button class="btn primary" data-nav="next" ${((!canGoNext() && ![0,1,8,9,10].includes(screen)) || appState.submitting) ? "disabled" : ""}>${screen === 7 ? "Abschließen" : screen === 9 ? "Teilnehmen & abschließen" : screen === 10 && appState.mode === "adminPreview" ? "Zurück zum Admin" : "Weiter"}</button>
+    </div></nav>`);
+  }
+  html.push(renderTreatmentModal());
   root.innerHTML = html.join("");
   if (screen === 10 && appState.mode !== "adminPreview"){
     launchConfetti();
@@ -1914,6 +1980,7 @@ async function route(){
 }
 
 async function nextSurvey(){
+  appState.showTreatmentModal = false;
   if (appState.mode === "adminPreview" && appState.screenIndex === 10){
     await exitAdminSurveyPreview();
     return;
@@ -1963,11 +2030,24 @@ async function nextSurvey(){
       window.scrollTo(0,0);
       return;
     }
+    const raffleEmail = String(appState.answers.raffle_email || "").trim();
+    if (raffleEmail && !hasValidRaffleEmail()){
+      appState.message = "Bitte geben Sie eine gültige E-Mail-Adresse ein oder schließen Sie ohne Gewinnspielteilnahme ab.";
+      renderSurvey();
+      return;
+    }
+    if (!raffleEmail){
+      appState.message = "Survey abgeschlossen.";
+      appState.screenIndex = 10;
+      renderSurvey();
+      window.scrollTo(0,0);
+      return;
+    }
     appState.submitting = true;
     appState.message = "E-Mail wird gespeichert ...";
     renderSurvey();
     try{
-      await api.submitRaffleEntry(appState.participant, appState.answers.raffle_email);
+      await api.submitRaffleEntry(appState.participant, raffleEmail);
       appState.message = "Teilnahme am Gewinnspiel gespeichert.";
       appState.screenIndex = 10;
     }catch(error){
@@ -1980,7 +2060,8 @@ async function nextSurvey(){
 }
 
 function previousSurvey(){
-  if (appState.screenIndex > 0){
+  if (appState.screenIndex > 0 && appState.screenIndex < 8){
+    appState.showTreatmentModal = false;
     appState.screenIndex -= 1;
     renderSurvey();
     window.scrollTo(0,0);
@@ -2156,6 +2237,22 @@ function exportCsv(){
 }
 
 document.addEventListener("click", async event => {
+  if (event.target.closest("[data-show-treatment]")){
+    appState.showTreatmentModal = true;
+    renderSurvey();
+    return;
+  }
+
+  if (event.target.closest("[data-close-treatment]")){
+    appState.showTreatmentModal = false;
+    renderSurvey();
+    return;
+  }
+
+  if (event.target.closest("[data-treatment-modal-panel]")){
+    return;
+  }
+
   const inlineImage = event.target.closest("[data-inline-image]");
   if (inlineImage){
     document.getElementById("assetUpload")?.click();
@@ -2356,6 +2453,12 @@ document.addEventListener("input", event => {
 });
 
 document.addEventListener("keydown", event => {
+  if (event.key === "Escape" && appState.showTreatmentModal){
+    appState.showTreatmentModal = false;
+    renderSurvey();
+    return;
+  }
+
   const inlineField = event.target.closest("[data-inline-field]");
   const inlineSetting = event.target.closest("[data-setting-inline]");
   const target = inlineField || inlineSetting;
