@@ -692,27 +692,27 @@ const DEFAULT_SETTINGS = {
 
 const QUESTION_GROUPS = [
   {key:"trust",title:"Markenvertrauen",intro:"Bitte geben Sie an, inwieweit Sie den folgenden Aussagen zustimmen.",items:[
-    ["trust_reliable","Markenvertrauen","Diese Marke wirkt auf mich verlässlich."],
-    ["trust_confidence","Markenvertrauen","Ich habe Vertrauen in diese Marke."],
-    ["trust_promise","Markenvertrauen","Diese Marke hält, was sie verspricht."],
-    ["trust_expectations","Markenvertrauen","Diese Marke scheint die Erwartungen ihrer Kund:innen zu erfüllen."]
+    ["trust_reliable","Markenvertrauen","Durch die gezeigte Anzeige wirkt diese Marke für mich verlässlich."],
+    ["trust_confidence","Markenvertrauen","Durch die gezeigte Anzeige könnte ich mir vorstellen, Vertrauen in diese Marke aufzubauen."],
+    ["trust_promise","Markenvertrauen","Durch die gezeigte Anzeige wirkt es auf mich so, als würde diese Marke halten, was sie verspricht."],
+    ["trust_expectations","Markenvertrauen","Durch die gezeigte Anzeige wirkt es auf mich so, als würde diese Marke die Erwartungen ihrer Kund:innen erfüllen."]
   ]},
   {key:"innovation",title:"Wahrgenommene Innovativität",intro:"Bitte geben Sie an, inwieweit Sie den folgenden Aussagen zustimmen.",items:[
-    ["innovation_innovative","Markeninnovativität","Diese Marke wirkt innovativ."],
-    ["innovation_creative","Markeninnovativität","Diese Marke wirkt kreativ."],
-    ["innovation_modern","Markeninnovativität","Diese Marke wirkt modern und zukunftsorientiert."],
-    ["innovation_solutions","Markeninnovativität","Ich traue dieser Marke zu, neue und relevante Lösungen hervorzubringen."]
+    ["innovation_innovative","Markeninnovativität","Durch die gezeigte Anzeige habe ich das Gefühl, dass diese Marke innovativ ist."],
+    ["innovation_creative","Markeninnovativität","Durch die gezeigte Anzeige habe ich das Gefühl, dass diese Marke kreativ ist."],
+    ["innovation_modern","Markeninnovativität","Durch die gezeigte Anzeige habe ich das Gefühl, dass diese Marke modern und zukunftsorientiert ist."],
+    ["innovation_solutions","Markeninnovativität","Durch die gezeigte Anzeige habe ich das Gefühl, dass diese Marke neue und relevante Lösungen hervorbringen kann."]
   ]},
   {key:"purchase",title:"Kaufabsicht",intro:"Bitte geben Sie an, inwieweit Sie den folgenden Aussagen zustimmen.",items:[
-    ["purchase_after_impression","Kaufabsicht","Nach diesem Eindruck könnte ich mir vorstellen, Produkte dieser Marke zu kaufen."],
-    ["purchase_consideration","Kaufabsicht","Die Wahrscheinlichkeit, dass ich diese Marke in Betracht ziehen würde, ist hoch."],
-    ["purchase_products","Kaufabsicht","Ich könnte mir vorstellen, Produkte dieser Marke zu kaufen."],
-    ["purchase_prefer","Kaufabsicht","Ich würde diese Marke eher auswählen als vergleichbare Alternativen."]
+    ["purchase_after_impression","Kaufabsicht","Durch die gezeigte Anzeige könnte ich mir vorstellen, Produkte dieser Marke zu kaufen."],
+    ["purchase_consideration","Kaufabsicht","Durch die gezeigte Anzeige ist die Wahrscheinlichkeit hoch, dass ich diese Marke in Betracht ziehen könnte."],
+    ["purchase_products","Kaufabsicht","Durch die gezeigte Anzeige wird diese Marke für mich als Kaufoption interessanter."],
+    ["purchase_prefer","Kaufabsicht","Durch die gezeigte Anzeige könnte ich diese Marke eher auswählen als vergleichbare Alternativen."]
   ]},
   {key:"evaluation",title:"Allgemeine Markenbewertung",intro:"Bitte geben Sie an, inwieweit Sie den folgenden Aussagen zustimmen.",items:[
-    ["evaluation_positive","Markenbewertung","Insgesamt hinterlässt diese Marke einen positiven Eindruck bei mir."],
-    ["evaluation_fit","Markenbewertung","Die gezeigte Kommunikation passt gut zu dieser Marke."],
-    ["evaluation_quality","Markenbewertung","Die Marke wirkt hochwertig."]
+    ["evaluation_positive","Markenbewertung","Durch die gezeigte Anzeige hinterlässt diese Marke insgesamt einen positiven Eindruck bei mir."],
+    ["evaluation_fit","Markenbewertung","Durch die gezeigte Anzeige wirkt die Markenkommunikation für mich passend zu dieser Marke."],
+    ["evaluation_quality","Markenbewertung","Durch die gezeigte Anzeige wirkt diese Marke für mich hochwertig."]
   ]}
 ];
 
@@ -1187,7 +1187,7 @@ function answerKey(itemKey){
 
 function allQuestionItems(){
   const items = getQuestionGroups().flatMap(group => group.items);
-  items.push(["ai_detected","Manipulation Check KI","Ich hatte den Eindruck, dass bei den gezeigten Inhalten künstliche Intelligenz eingesetzt wurde."]);
+  items.push(["ai_detected","Manipulation Check KI","Bei der gezeigten Anzeige hatte ich den Eindruck, dass künstliche Intelligenz eingesetzt wurde."]);
   items.push(["age","Demografie","Wie alt sind Sie?"]);
   items.push(["gender","Demografie","Welchem Geschlecht ordnen Sie sich zu?"]);
   items.push(["education","Demografie","Höchster Bildungsabschluss"]);
@@ -1476,7 +1476,7 @@ function renderSurvey(){
       <div class="qgroup">
         <div class="question">
           <div class="question-head">
-            <div class="qtitle">Ich hatte den Eindruck, dass bei den gezeigten Inhalten künstliche Intelligenz eingesetzt wurde.</div>
+            <div class="qtitle">Bei der gezeigten Anzeige hatte ich den Eindruck, dass künstliche Intelligenz eingesetzt wurde.</div>
           </div>
           ${renderLikert("ai_detected")}
         </div>
