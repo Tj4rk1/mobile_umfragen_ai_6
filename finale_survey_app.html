@@ -860,7 +860,7 @@ function normalizeTreatment(row){
 
 function normalizeSettings(row){
   const source = row?.settings || row || {};
-  return {...DEFAULT_SETTINGS, ...source};
+  return {...DEFAULT_SETTINGS, ...source, questionGroups: DEFAULT_SETTINGS.questionGroups};
 }
 
 function toDbTreatment(conditionId, treatment){
