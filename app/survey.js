@@ -101,7 +101,7 @@
     if (PREVIEW || state.participantId || !db) return;
     const { data, error } = await db.rpc("assign_participant", {
       p_anonymous_id: state.anonymousId,
-      p_user_agent: navigator.userAgent.slice(0, 400),
+      p_user_agent: null, // bewusst nicht gespeichert (keine personenbezogenen Daten)
     });
     if (error) throw error;
     state.participantId = data.id;
@@ -119,7 +119,6 @@
       website_path: siteLang().path,
       attention_ok: att && state.answers[att.key] !== undefined ? state.answers[att.key] === att.attention : null,
       last_step: step().id,
-      language: navigator.language,
     };
   }
 
@@ -628,6 +627,7 @@
       <h1 class="headline">${esc(t(s.title))}</h1>
       <p class="lead">${esc(t(s.lead))}</p>
       <div class="facts">${s.facts.map(([ti, d]) => `<div class="fact"><strong>${esc(t(ti))}</strong><span>${esc(t(d))}</span></div>`).join("")}</div>
+      ${s.privacy ? `<div class="privacy"><strong>${esc(t(s.privacy.title))}</strong><p>${esc(t(s.privacy.text))}</p></div>` : ""}
       ${questionsHtml(s)}
       ${!db && !PREVIEW ? `<div class="notice">${esc(u().dbDown)}</div>` : ""}`;
   }

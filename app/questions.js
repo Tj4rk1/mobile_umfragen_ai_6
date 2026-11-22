@@ -58,16 +58,23 @@
       ),
       facts: [
         [T("ca. " + cfg.study.minutes + " Minuten", "approx. " + cfg.study.minutes + " minutes"), T("Fragen zu Ihrem Alltag, ein Website-Test und Ihre Einschätzung.", "Questions about your work, a website test and your assessment.")],
-        [T("Anonym", "Anonymous"), T("Wir speichern keine Namen. Die Antworten werden nur für das Studienprojekt ausgewertet.", "We don't store names. Answers are only analysed for this study project.")],
+        [T("Anonym", "Anonymous"), T("Wir speichern keine personenbezogenen Daten. Ihre Antworten lassen sich Ihnen nicht zuordnen.", "We don't store any personal data. Your answers can't be traced back to you.")],
         [T("Kritik erwünscht", "Criticism welcome"), T("Es gibt keine falschen Antworten. Gerade kritische Eindrücke helfen uns am meisten.", "There are no wrong answers. Critical impressions help us most.")],
       ],
+      privacy: {
+        title: T("Datenschutz", "Privacy"),
+        text: T(
+          "Die Umfrage ist anonym. Wir speichern keine personenbezogenen Daten wie Ihren Namen oder Ihre E-Mail-Adresse, sondern nur Ihre Antworten. Die einzige Ausnahme: Am Ende können Sie freiwillig eine E-Mail-Adresse für Rückfragen angeben. Diese speichern wir nur, wenn Sie sie dort ausdrücklich eintragen, und getrennt von Ihren Antworten. Bitte nennen Sie in Freitext-Antworten keine Namen von Personen.",
+          "This survey is anonymous. We don't store any personal data such as your name or email address, only your answers. The only exception: at the end you can voluntarily leave an email address for follow-up questions. We only store it if you explicitly enter it there, and separately from your answers. Please don't mention names of people in your free-text answers."
+        ),
+      },
       questions: [
         {
           key: "einwilligung",
           type: "consent",
           label: T(
-            "Ich bin einverstanden, dass meine Antworten anonym gespeichert und im Rahmen des Studienprojekts ausgewertet werden.",
-            "I agree that my answers are stored anonymously and analysed as part of the study project."
+            "Ich habe den Datenschutzhinweis gelesen und bin einverstanden, dass meine Antworten anonym gespeichert und im Rahmen des Studienprojekts ausgewertet werden.",
+            "I have read the privacy notice and agree that my answers are stored anonymously and analysed as part of the study project."
           ),
           required: true,
         },
@@ -628,8 +635,11 @@
         {
           key: "kontakt",
           type: "email",
-          label: T("Dürfen wir uns bei Rückfragen melden?", "May we contact you with follow-up questions?"),
-          hint: T("Freiwillig. Ihre E-Mail-Adresse wird getrennt von Ihren Antworten gespeichert.", "Optional. Your email address is stored separately from your answers."),
+          label: T("Dürfen wir uns bei Rückfragen bei Ihnen melden?", "May we contact you with follow-up questions?"),
+          hint: T(
+            "Freiwillig. Nur wenn Sie hier Ihre E-Mail-Adresse eintragen, speichern wir sie, und zwar getrennt von Ihren Antworten. Ohne Eintrag bleibt Ihre Teilnahme vollständig anonym.",
+            "Optional. We only store your email address if you enter it here, and separately from your answers. Without it, your participation stays completely anonymous."
+          ),
           placeholder: T("E-Mail-Adresse (optional)", "Email address (optional)"),
         },
       ],

@@ -180,6 +180,11 @@ input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; border-radius
 .fivesec-cta { display: flex; align-items: center; gap: 12px; margin-top: 32px; flex-wrap: wrap; }
 .fivesec-cta .hint { color: var(--muted); font-size: 14px; margin-left: 6px; }
 
+/* Datenschutzhinweis */
+.privacy { margin-top: 10px; padding: 18px 20px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.privacy strong { display: block; font-size: 15px; font-weight: 500; margin-bottom: 6px; }
+.privacy p { margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--ink-2); }
+
 /* Sprachwahl (erster Schritt) */
 .muted-head { color: var(--faint); }
 .langpick { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 36px; }
@@ -424,3 +429,4 @@ table.pt tr.click:hover td { background: var(--bg); }
   .quote { grid-template-columns: 1fr; gap: 4px; }
   .admin-table-wrap { overflow-x: auto; }
 }
+.privacy + .questions { margin-top: 16px; }
