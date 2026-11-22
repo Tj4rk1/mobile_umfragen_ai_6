@@ -110,7 +110,7 @@
     saveStatus = s;
     const el = document.querySelector("[data-save]");
     if (el) {
-      el.className = "save-state mono " + (s === "pending" ? "pending" : s === "error" ? "error" : "");
+      el.className = "save-state " + (s === "pending" ? "pending" : s === "error" ? "error" : "");
       el.textContent = saveLabel();
     }
   }
@@ -271,30 +271,18 @@
     return Math.round((state.stepIndex / total) * 100);
   }
 
-  function railHtml() {
-    const current = step().section;
-    const currentIdx = sections.findIndex((s) => s.id === current);
+  function headerHtml() {
+    const sec = sections.find((x) => x.id === step().section);
+    const idx = sections.indexOf(sec);
     return `
-      <aside class="rail">
-        <div class="brandmark"><span class="dot"></span><div><strong>${esc(cfg.study.title)}</strong><span>${esc(cfg.study.institution)}</span></div></div>
-        <ol class="toc">
-          ${sections
-            .map((s, i) => {
-              const cls = i < currentIdx ? "done" : i === currentIdx ? "current" : "";
-              return `<li class="${cls}"><span class="n">${i < currentIdx ? "✓" : String(i).padStart(2, "0")}</span><span class="t">${esc(s.title)}</span><span class="m">${s.minutes}′</span></li>`;
-            })
-            .join("")}
-        </ol>
-        <div class="rail-foot">
+      <header class="sheader">
+        <div class="sh-brand"><span class="orb"></span><span class="sh-title">${esc(cfg.study.title)}</span></div>
+        <div class="sh-progress" aria-label="Fortschritt ${progress()} Prozent">
+          <span class="sh-sec">${idx > 0 ? `<span class="sh-n">${idx}/${sections.length - 1}</span>` : ""}${esc(sec.title)}</span>
           <div class="meter"><i style="width:${progress()}%"></i></div>
-          <div class="row mono"><span>${progress()} %</span><span data-save class="save-state mono">${saveLabel()}</span></div>
         </div>
-      </aside>`;
-  }
-
-  function topbarHtml() {
-    const s = sections.find((x) => x.id === step().section);
-    return `<div class="topbar"><div class="row"><span>${esc(s.title)}</span><span>${progress()} %</span></div><div class="meter"><i style="width:${progress()}%"></i></div></div>`;
+        <div class="sh-save"><span data-save class="save-state">${saveLabel()}</span></div>
+      </header>`;
   }
 
   function navHtml({ nextLabel = "Weiter", showBack = true, accent = false } = {}) {
@@ -305,7 +293,7 @@
         <span class="count">${String(state.stepIndex + 1).padStart(2, "0")} / ${String(n).padStart(2, "0")}</span>
         <span class="spacer"></span>
         <span class="kbd"><b>Enter ↵</b></span>
-        <button class="btn ${accent ? "accent" : ""}" data-act="next" type="button">${esc(nextLabel)} <span class="arr">→</span></button>
+        <button class="btn ${accent ? "lg" : ""}" data-act="next" type="button">${esc(nextLabel)} <span class="arr">→</span></button>
       </div>`;
   }
 
@@ -427,11 +415,10 @@
       s.kind === "intro" ? introHtml(s) : s.kind === "fivesec" ? fivesecBriefHtml(s) : standardHtml(s);
 
     root.innerHTML = `
-      ${PREVIEW ? `<div class="preview-flag">Vorschau · Antworten werden nicht gespeichert</div>` : ""}
-      <div class="shell">
-        ${railHtml()}
+      
+      <div class="page">
+        ${headerHtml()}
         <main class="main">
-          ${topbarHtml()}
           <div class="stage"><div class="content">${body}</div></div>
           ${s.kind === "fivesec" ? "" : navHtml({ nextLabel: s.kind === "intro" ? "Los geht’s" : nextLabelFor(), showBack: s.kind !== "intro", accent: s.kind === "intro" })}
         </main>
@@ -470,8 +457,8 @@
       <p class="lead">${esc(s.lead)}</p>
       <ol class="brief">${s.instructions.map(([t, d]) => `<li><div><strong>${esc(t)}</strong><span>${esc(d)}</span></div></li>`).join("")}</ol>
       <div class="fivesec-cta">
-        <button class="btn accent" data-act="fivesec" type="button" ${websiteMode === "checking" ? "disabled" : ""}>Ich bin bereit <span class="arr">→</span></button>
-        <span class="mono">${websiteMode === "checking" ? "Seite wird vorbereitet …" : `Countdown ${W.countdownSeconds} s, dann ${W.exposureSeconds} s Website`}</span>
+        <button class="btn lg" data-act="fivesec" type="button" ${websiteMode === "checking" ? "disabled" : ""}>Ich bin bereit <span class="arr">→</span></button>
+        <span class="hint">${websiteMode === "checking" ? "Seite wird vorbereitet …" : `Countdown ${W.countdownSeconds} s, dann ${W.exposureSeconds} s Website`}</span>
       </div>
       <div style="margin-top:28px"><button class="btn ghost" data-act="back" type="button">Zurück</button></div>`;
   }
@@ -492,17 +479,15 @@
       // iframe behalten (Scrollposition bleibt erhalten), nur Panel + Rail tauschen
       existing.querySelector(".panel").innerHTML = panel;
       existing.querySelector(".panel-scroll").scrollTop = 0;
-      root.querySelector(".rail").outerHTML = railHtml();
-      root.querySelector(".topbar").outerHTML = topbarHtml();
+      root.querySelector(".sheader").outerHTML = headerHtml();
       return;
     }
 
     root.innerHTML = `
-      ${PREVIEW ? `<div class="preview-flag">Vorschau · Antworten werden nicht gespeichert</div>` : ""}
-      <div class="shell is-website">
-        ${railHtml()}
+      
+      <div class="page is-website">
+        ${headerHtml()}
         <main class="main">
-          ${topbarHtml()}
           <div class="split">
             <section class="browser" aria-label="Website">
               <div class="chrome">
@@ -539,7 +524,7 @@
   function renderEndError() {
     const el = document.querySelector("[data-end-status]");
     if (!el) return;
-    el.innerHTML = `<div class="notice">Ihre letzten Antworten konnten nicht übertragen werden. Bitte prüfen Sie Ihre Verbindung. <button class="btn accent" data-act="retry-save" type="button" style="margin-top:10px;height:40px">Erneut senden</button></div>`;
+    el.innerHTML = `<div class="notice">Ihre letzten Antworten konnten nicht übertragen werden. Bitte prüfen Sie Ihre Verbindung. <button class="btn" data-act="retry-save" type="button" style="margin-top:10px;height:40px">Erneut senden</button></div>`;
   }
 
   // ── Five-second test ───────────────────────────────────────

@@ -1,6 +1,6 @@
 # Kolsetu-Interviewstudie: Vertrauen in KI im Kundenservice
 
-Selbst ausfüllbare Version des Interviewleitfadens „Trust (Entwurf v2)“ mit 5-Sekunden-Website-Test.
+Selbst ausfüllbare Version des Interviewleitfadens „Trust (Entwurf v2)“ mit Website-Test (25 Sekunden, Dauer in `app/config.js`).
 Desktop first, mobil nutzbar. Statisches Frontend auf Vercel, Daten in Supabase (`vkvpvidfhkuxvczckzdl`).
 
 | Pfad | Was |
@@ -13,7 +13,7 @@ Desktop first, mobil nutzbar. Statisches Frontend auf Vercel, Daten in Supabase 
 
 - `app/questions.js`: Fragebogen. `ref` = Fragennummer im Leitfaden (F1–F21). Pflichtfragen laut Leitfaden: F3, F6, F7, F9, F11, F14, F19, F20.
 - `app/config.js`: Supabase-Keys, Website-Pfad (`/` = EN, `/de` = DE), Testdauer, Claims, LinkedIn-Beispielnachricht.
-- `app/survey.js`: Ablauf, 5-Sekunden-Test (Briefing → Countdown → 5 s → automatisch ausblenden), Split-View.
+- `app/survey.js`: Ablauf, Website-Test (Briefing → Countdown → 25 s → automatisch ausblenden), Split-View.
 - `app/admin.js`: Kennzahlen, Antworten je Frage, Teilnehmende, Kontakte, CSV-Export (Excel-kompatibel, `;`).
 - `api/site.js` + `vercel.json`: Website-Proxy (siehe unten).
 - `supabase/migrations/20261122120000_kolsetu_interview.sql`: Studien-Condition, RPC `save_interview_progress`, gesperrte direkte Schreibrechte.

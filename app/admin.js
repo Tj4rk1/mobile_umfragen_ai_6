@@ -103,7 +103,7 @@
       <div class="kpi"><div class="v">${done.length}</div><div class="l">Abgeschlossen</div></div>
       <div class="kpi"><div class="v">${all.length ? Math.round((done.length / all.length) * 100) : 0}%</div><div class="l">Abschlussquote</div></div>
       <div class="kpi"><div class="v">${durs.length ? Math.round(median(durs) / 60000) + "′" : "–"}</div><div class="l">Median-Dauer</div></div>
-      <div class="kpi"><div class="v">${live}<span style="font-size:22px;color:var(--muted)"> / ${shot}</span></div><div class="l">5-Sek.: live / Screenshot</div></div>
+      <div class="kpi"><div class="v">${live}<span style="font-size:22px;color:var(--muted)"> / ${shot}</span></div><div class="l">Website-Test: live / Screenshot</div></div>
     </div>`;
   }
 
@@ -235,7 +235,7 @@
     const list = visibleParticipants();
     if (!list.length) return `<div class="empty">Noch keine Teilnehmenden.</div>`;
     return `<div class="admin-table-wrap"><table class="pt">
-      <thead><tr><th>ID</th><th>Gestartet</th><th>Status</th><th>Dauer</th><th>Rolle · Branche</th><th>5-Sek.</th><th>Zuletzt</th></tr></thead>
+      <thead><tr><th>ID</th><th>Gestartet</th><th>Status</th><th>Dauer</th><th>Rolle · Branche</th><th>Website</th><th>Zuletzt</th></tr></thead>
       <tbody>${list
         .map((p) => {
           const a = byP.get(p.id) || {};
@@ -267,7 +267,7 @@
       <div class="eyebrow">Teilnehmende ${shortId(p.id)}</div>
       <h1 class="headline" style="font-size:44px">${esc(personTag(a)) || "Ohne Angaben"}</h1>
       <div class="stat-line">Gestartet ${fmtDate(p.started_at)} · ${p.status === "completed" ? "abgeschlossen nach " + fmtDuration(duration(p)) : "nicht abgeschlossen"}
-      ${fs ? `<br>5-Sek.-Test: ${esc(fs.mode)}, ${fs.shown_ms} ms gezeigt, Viewport ${fs.viewport?.w}×${fs.viewport?.h}` : ""}
+      ${fs ? `<br>Website-Test: ${esc(fs.mode)}, ${fs.shown_ms} ms gezeigt, Viewport ${fs.viewport?.w}×${fs.viewport?.h}` : ""}
       ${p.meta?.claim_order ? `<br>Claim-Reihenfolge: ${p.meta.claim_order.map((c, i) => String.fromCharCode(65 + i) + " = " + c).join(", ")}` : ""}</div>
       <dl>${fields
         .filter((f) => a[f.key])
@@ -299,7 +299,7 @@
   function exportHtml() {
     return `
       <div class="acard"><div class="acard-head"><h3>Breit: eine Zeile pro Person</h3></div>
-        <p class="empty" style="margin-top:0">Für Excel bzw. Numbers. Spalten = Fragen, mit Rolle, Dauer und 5-Sekunden-Metadaten.</p>
+        <p class="empty" style="margin-top:0">Für Excel bzw. Numbers. Spalten = Fragen, mit Rolle, Dauer und Website-Test-Metadaten.</p>
         <button class="btn" data-act="csv-wide" type="button">CSV herunterladen</button></div>
       <div class="acard"><div class="acard-head"><h3>Lang: eine Zeile pro Antwort</h3></div>
         <p class="empty" style="margin-top:0">Rohdaten aus der Tabelle <code>responses</code>, gut zum Filtern und Codieren.</p>

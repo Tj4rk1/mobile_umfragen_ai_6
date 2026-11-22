@@ -19,7 +19,7 @@ window.STUDY_CONFIG = {
     displayUrl: "kolsetu.com",
     // Pfad auf kolsetu.com, der getestet wird ("/" = englische Startseite, "/de" = deutsche)
     path: "/",
-    exposureSeconds: 5,
+    exposureSeconds: 25,
     // In der Split-Ansicht wird die Seite in dieser Breite gerendert und verkleinert,
     // damit auch neben dem Fragen-Panel das Desktop-Layout zu sehen ist.
     desktopWidth: 1280,
