@@ -36,4 +36,4 @@ node --experimental-detect-module scripts/dev-server.mjs   # http://localhost:41
 
 `participants` (eine Zeile pro Person, `meta` mit Viewport, 5-Sek.-Daten, Claim-Reihenfolge, Zeit pro Schritt),
 `responses` (eine Zeile pro Antwort, wird nach jedem Schritt gespeichert, auch bei Abbruch),
-`raffle_entries` (freiwillige Kontakt-E-Mail, getrennt von den Antworten).
+`raffle_entries` (freiwillige Kontakt-E-Mail, über `participant_id` mit den Antworten verknüpft und in der Auswertung bei der Person angezeigt).

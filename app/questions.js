@@ -58,14 +58,14 @@
       ),
       facts: [
         [T("ca. " + cfg.study.minutes + " Minuten", "approx. " + cfg.study.minutes + " minutes"), T("Fragen zu Ihrem Alltag, ein Website-Test und Ihre Einschätzung.", "Questions about your work, a website test and your assessment.")],
-        [T("Anonym", "Anonymous"), T("Wir speichern keine personenbezogenen Daten. Ihre Antworten lassen sich Ihnen nicht zuordnen.", "We don't store any personal data. Your answers can't be traced back to you.")],
+        [T("Anonym", "Anonymous"), T("Ohne Ihre ausdrückliche Angabe speichern wir keine personenbezogenen Daten.", "Unless you explicitly provide it, we don't store any personal data.")],
         [T("Kritik erwünscht", "Criticism welcome"), T("Es gibt keine falschen Antworten. Gerade kritische Eindrücke helfen uns am meisten.", "There are no wrong answers. Critical impressions help us most.")],
       ],
       privacy: {
         title: T("Datenschutz", "Privacy"),
         text: T(
-          "Die Umfrage ist anonym. Wir speichern keine personenbezogenen Daten wie Ihren Namen oder Ihre E-Mail-Adresse, sondern nur Ihre Antworten. Die einzige Ausnahme: Am Ende können Sie freiwillig eine E-Mail-Adresse für Rückfragen angeben. Diese speichern wir nur, wenn Sie sie dort ausdrücklich eintragen, und getrennt von Ihren Antworten. Bitte nennen Sie in Freitext-Antworten keine Namen von Personen.",
-          "This survey is anonymous. We don't store any personal data such as your name or email address, only your answers. The only exception: at the end you can voluntarily leave an email address for follow-up questions. We only store it if you explicitly enter it there, and separately from your answers. Please don't mention names of people in your free-text answers."
+          "Die Umfrage ist anonym. Wir speichern keine personenbezogenen Daten wie Ihren Namen oder Ihre E-Mail-Adresse, sondern nur Ihre Antworten. Die einzige Ausnahme: Am Ende können Sie freiwillig eine E-Mail-Adresse angeben, damit wir Ihnen Rückfragen zu Ihren Antworten stellen können. Nur dann, und nur wenn Sie sie dort ausdrücklich eintragen, ist Ihre E-Mail-Adresse mit Ihren Antworten verknüpft. Bitte nennen Sie in Freitext-Antworten keine Namen von Personen.",
+          "This survey is anonymous. We don't store any personal data such as your name or email address, only your answers. The only exception: at the end you can voluntarily leave an email address so we can ask follow-up questions about your answers. Only then, and only if you explicitly enter it there, is your email address linked to your answers. Please don't mention names of people in your free-text answers."
         ),
       },
       questions: [
@@ -637,8 +637,8 @@
           type: "email",
           label: T("Dürfen wir uns bei Rückfragen bei Ihnen melden?", "May we contact you with follow-up questions?"),
           hint: T(
-            "Freiwillig. Nur wenn Sie hier Ihre E-Mail-Adresse eintragen, speichern wir sie, und zwar getrennt von Ihren Antworten. Ohne Eintrag bleibt Ihre Teilnahme vollständig anonym.",
-            "Optional. We only store your email address if you enter it here, and separately from your answers. Without it, your participation stays completely anonymous."
+            "Freiwillig. Wenn Sie hier Ihre E-Mail-Adresse eintragen, wird sie mit Ihren Antworten verknüpft, damit wir gezielt nachfragen können. Ohne Eintrag bleibt Ihre Teilnahme vollständig anonym.",
+            "Optional. If you enter your email address here, it will be linked to your answers so we can ask specific follow-up questions. Without it, your participation stays completely anonymous."
           ),
           placeholder: T("E-Mail-Adresse (optional)", "Email address (optional)"),
         },

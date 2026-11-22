@@ -180,6 +180,9 @@ input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; border-radius
 .fivesec-cta { display: flex; align-items: center; gap: 12px; margin-top: 32px; flex-wrap: wrap; }
 .fivesec-cta .hint { color: var(--muted); font-size: 14px; margin-left: 6px; }
 
+.contact-box { display: inline-block; margin: 0 0 12px; padding: 8px 14px; border-radius: 999px; background: var(--soft); border: 1px solid var(--line); font-size: 14px; }
+.contact-box a, .pt a, .quote .who a[href^="mailto"] { color: var(--ink); }
+
 /* Datenschutzhinweis */
 .privacy { margin-top: 10px; padding: 18px 20px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
 .privacy strong { display: block; font-size: 15px; font-weight: 500; margin-bottom: 6px; }

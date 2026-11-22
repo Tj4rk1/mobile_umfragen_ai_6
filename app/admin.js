@@ -70,6 +70,14 @@
     return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
   }
 
+  // Freiwillig angegebene E-Mail (raffle_entries, verknüpft über participant_id)
+  function contactOf(pid) {
+    return data.contacts.find((c) => c.participant_id === pid)?.email || "";
+  }
+  function mailLink(email) {
+    return email ? `<a href="mailto:${esc(email)}" onclick="event.stopPropagation()">${esc(email)}</a>` : "";
+  }
+
   function personTag(answers) {
     const role = answers.rolle?.value || "";
     const branch = answers.branche?.value || "";
@@ -183,7 +191,7 @@
         if (q.type === "text") {
           inner = rows.length
             ? `<div class="quotes">${rows
-                .map(({ p, a }) => `<div class="quote"><div class="who"><a href="#" data-open="${p.id}">${shortId(p.id)}</a><br>${esc(personTag(a))}</div><p>${esc(a[q.key].value)}</p></div>`)
+                .map(({ p, a }) => `<div class="quote"><div class="who"><a href="#" data-open="${p.id}">${shortId(p.id)}</a><br>${esc(personTag(a))}${contactOf(p.id) ? `<br>${mailLink(contactOf(p.id))}` : ""}</div><p>${esc(a[q.key].value)}</p></div>`)
                 .join("")}</div>`
             : `<div class="empty">Noch keine Antworten.</div>`;
         } else if (q.type === "single" || q.type === "multi") {
@@ -242,7 +250,7 @@
     const list = visibleParticipants();
     if (!list.length) return `<div class="empty">Noch keine Teilnehmenden.</div>`;
     return `<div class="admin-table-wrap"><table class="pt">
-      <thead><tr><th>ID</th><th>Gestartet</th><th>Status</th><th>Dauer</th><th>Rolle · Branche</th><th>Sprache</th><th>Check</th><th>Website</th><th>Zuletzt</th></tr></thead>
+      <thead><tr><th>ID</th><th>Gestartet</th><th>Status</th><th>Dauer</th><th>Rolle · Branche</th><th>Kontakt</th><th>Sprache</th><th>Check</th><th>Website</th><th>Zuletzt</th></tr></thead>
       <tbody>${list
         .map((p) => {
           const a = byP.get(p.id) || {};
@@ -252,6 +260,7 @@
             <td>${p.status === "completed" ? `<span class="pill ok">fertig</span>` : `<span class="pill warn">offen</span>`}</td>
             <td class="mono">${fmtDuration(duration(p))}</td>
             <td>${esc(personTag(a)) || "–"}</td>
+            <td style="font-size:13px">${mailLink(contactOf(p.id)) || "–"}</td>
             <td class="mono">${esc(LANG_LABEL[p.meta?.survey_lang] || "–")}</td>
             <td>${attentionPill(p)}</td>
             <td class="mono">${esc(p.meta?.fivesec?.mode || "–")}${p.meta?.website_lang ? " · " + esc(p.meta.website_lang) : ""}</td>
@@ -275,6 +284,7 @@
     dr.innerHTML = `
       <div class="eyebrow">Teilnehmende ${shortId(p.id)}</div>
       <h1 class="headline" style="font-size:44px">${esc(personTag(a)) || "Ohne Angaben"}</h1>
+      ${contactOf(p.id) ? `<div class="contact-box">Kontakt für Rückfragen: ${mailLink(contactOf(p.id))}</div>` : `<div class="stat-line">Kein Kontakt angegeben (anonym).</div>`}
       <div class="stat-line">Gestartet ${fmtDate(p.started_at)} · ${p.status === "completed" ? "abgeschlossen nach " + fmtDuration(duration(p)) : "nicht abgeschlossen"}
       ${fs ? `<br>Website-Test: ${esc(fs.mode)}, Sprache ${esc(p.meta?.website_lang || "–")}, ${fs.shown_ms} ms gezeigt, Viewport ${fs.viewport?.w}×${fs.viewport?.h}` : ""}
       <br>Umfragesprache: ${esc(LANG_LABEL[p.meta?.survey_lang] || "–")} · Aufmerksamkeitscheck: ${p.meta?.attention_ok === true ? "bestanden" : p.meta?.attention_ok === false ? "nicht bestanden" : "–"}</div>
@@ -298,16 +308,23 @@
 
   function contactsHtml() {
     if (!data.contacts.length) return `<div class="empty">Noch keine Kontaktangaben.</div>`;
-    return `<p class="lead" style="font-size:16px">Freiwillig angegebene E-Mail-Adressen für Rückfragen. Sie liegen in einer eigenen Tabelle und erscheinen nicht im Antwort-Export.</p>
-      <table class="pt"><thead><tr><th>E-Mail</th><th>Angegeben</th></tr></thead><tbody>
-      ${data.contacts.map((c) => `<tr><td>${esc(c.email)}</td><td>${fmtDate(c.created_at)}</td></tr>`).join("")}
-      </tbody></table>`;
+    const byP = answersByParticipant();
+    return `<p class="lead" style="font-size:16px">Freiwillig angegebene E-Mail-Adressen für Rückfragen. Klick auf eine Zeile öffnet die Antworten der Person.</p>
+      <div class="admin-table-wrap"><table class="pt"><thead><tr><th>E-Mail</th><th>ID</th><th>Rolle · Branche</th><th>Status</th><th>Angegeben</th></tr></thead><tbody>
+      ${data.contacts
+        .map((c) => {
+          const p = data.participants.find((x) => x.id === c.participant_id);
+          const a = byP.get(c.participant_id) || {};
+          return `<tr class="click" data-open="${c.participant_id}"><td>${mailLink(c.email)}</td><td class="mono">${shortId(c.participant_id)}</td><td>${esc(personTag(a)) || "–"}</td><td>${p?.status === "completed" ? `<span class="pill ok">fertig</span>` : `<span class="pill warn">offen</span>`}</td><td>${fmtDate(c.created_at)}</td></tr>`;
+        })
+        .join("")}
+      </tbody></table></div>`;
   }
 
   function exportHtml() {
     return `
       <div class="acard"><div class="acard-head"><h3>Breit: eine Zeile pro Person</h3></div>
-        <p class="empty" style="margin-top:0">Für Excel bzw. Numbers. Spalten = Fragen, mit Rolle, Dauer und Website-Test-Metadaten.</p>
+        <p class="empty" style="margin-top:0">Für Excel bzw. Numbers. Spalten = Fragen, mit Kontakt-E-Mail (falls angegeben), Dauer und Website-Test-Metadaten.</p>
         <button class="btn" data-act="csv-wide" type="button">CSV herunterladen</button></div>
       <div class="acard"><div class="acard-head"><h3>Lang: eine Zeile pro Antwort</h3></div>
         <p class="empty" style="margin-top:0">Rohdaten aus der Tabelle <code>responses</code>, gut zum Filtern und Codieren.</p>
@@ -336,12 +353,12 @@
   function exportWide() {
     const fields = answerFields();
     const byP = answersByParticipant();
-    const head = ["id", "status", "gestartet", "abgeschlossen", "dauer_min", "umfrage_sprache", "aufmerksamkeit_ok", "website_sprache", "fivesec_modus", "fivesec_ms", "viewport", ...fields.map((f) => (f.q.ref ? f.q.ref + " " : "") + f.key)];
+    const head = ["id", "kontakt_email", "status", "gestartet", "abgeschlossen", "dauer_min", "umfrage_sprache", "aufmerksamkeit_ok", "website_sprache", "fivesec_modus", "fivesec_ms", "viewport", ...fields.map((f) => (f.q.ref ? f.q.ref + " " : "") + f.key)];
     const rows = visibleParticipants().map((p) => {
       const a = byP.get(p.id) || {};
       const d = duration(p);
       return [
-        shortId(p.id), p.status, p.started_at, p.completed_at || "", d ? (d / 60000).toFixed(1).replace(".", ",") : "",
+        shortId(p.id), contactOf(p.id), p.status, p.started_at, p.completed_at || "", d ? (d / 60000).toFixed(1).replace(".", ",") : "",
         p.meta?.survey_lang || "", p.meta?.attention_ok === true ? "ja" : p.meta?.attention_ok === false ? "nein" : "",
         p.meta?.website_lang || "", p.meta?.fivesec?.mode || "", p.meta?.fivesec?.shown_ms || "",
         p.meta?.viewport ? `${p.meta.viewport.w}x${p.meta.viewport.h}` : "",
