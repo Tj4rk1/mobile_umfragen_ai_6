@@ -1,19 +1,67 @@
-// Teilnehmenden-Ansicht: Fragebogen, 5-Sekunden-Test, Website-Split-View.
+// Teilnehmenden-Ansicht: Sprachwahl, Fragebogen, Website-Test, Website-Split-View.
 (function () {
-  const { cfg, sections, steps, db, OTHER, esc, uid, buildResponseRows } = window.Common;
+  const { cfg, sections, steps, db, OTHER, L, optValue, esc, uid, isVisible, buildResponseRows } = window.Common;
   const W = cfg.website;
 
   const params = new URLSearchParams(location.search);
   const PREVIEW = params.has("preview");
   const STORAGE_KEY = cfg.storageKey + (PREVIEW ? "-preview" : "");
 
+  // ── Oberflächentexte ───────────────────────────────────────
+  const UI = {
+    de: {
+      next: "Weiter", back: "Zurück", submit: "Absenden", start: "Los geht’s",
+      required: "Pflicht", answerThis: "Bitte beantworten Sie diese Frage.", emailInvalid: "Bitte eine gültige E-Mail-Adresse angeben.",
+      other: "Andere, und zwar …", otherPh: "Bitte kurz angeben", maxNote: (n, m) => `${n} von max. ${m} gewählt`, unknown: "Weiß ich nicht",
+      preview: "Vorschau · speichert nicht", offline: "Offline",
+      save: { pending: "Speichert …", error: "Nicht gespeichert", ok: "Gespeichert", idle: "Automatisch gespeichert" },
+      dbDown: "Die Datenbank ist nicht erreichbar. Bitte laden Sie die Seite neu.",
+      siteLang: "Sprache der Website", ready: "Ich bin bereit", preparing: "Seite wird vorbereitet …",
+      cdHint: (c, e) => `Countdown ${c} s, dann ${e} s Website`,
+      part1: "Website-Test · Teil 1", part2: "Website-Test · Teil 2",
+      startingSoon: "Gleich geht’s los", loading: "Die Seite lädt noch, einen Moment …",
+      timeUp: "Zeit ist um.", timeUpSub: "Die Seite ist ausgeblendet. Jetzt ein paar Fragen dazu.",
+      reload: "Seite neu laden", gutter: "Ziehen, um die Breite zu ändern · Doppelklick: zurücksetzen", gutterAria: "Breite anpassen",
+      siteTitle: "Website im Test", screenshot: "Screenshot",
+      previewEnd: "Vorschau: Es wurde nichts gespeichert.", restart: "Neu starten",
+      endErr: "Ihre letzten Antworten konnten nicht übertragen werden. Bitte prüfen Sie Ihre Verbindung.", retry: "Erneut senden", sent: "Übertragen. Danke!",
+      newline: "Shift + Enter: neue Zeile", progress: (p) => `Fortschritt ${p} Prozent`,
+    },
+    en: {
+      next: "Next", back: "Back", submit: "Submit", start: "Let’s start",
+      required: "Required", answerThis: "Please answer this question.", emailInvalid: "Please enter a valid email address.",
+      other: "Other, namely …", otherPh: "Please specify", maxNote: (n, m) => `${n} of max. ${m} selected`, unknown: "I don't know",
+      preview: "Preview · not saved", offline: "Offline",
+      save: { pending: "Saving …", error: "Not saved", ok: "Saved", idle: "Saved automatically" },
+      dbDown: "The database can't be reached. Please reload the page.",
+      siteLang: "Website language", ready: "I'm ready", preparing: "Preparing the page …",
+      cdHint: (c, e) => `${c} s countdown, then ${e} s website`,
+      part1: "Website test · Part 1", part2: "Website test · Part 2",
+      startingSoon: "Starting soon", loading: "The page is still loading, one moment …",
+      timeUp: "Time's up.", timeUpSub: "The page is hidden. Now a few questions about it.",
+      reload: "Reload page", gutter: "Drag to resize · double-click to reset", gutterAria: "Resize",
+      siteTitle: "Website under test", screenshot: "Screenshot",
+      previewEnd: "Preview: nothing was saved.", restart: "Start over",
+      endErr: "Your latest answers couldn't be sent. Please check your connection.", retry: "Send again", sent: "Sent. Thank you!",
+      newline: "Shift + Enter: new line", progress: (p) => `Progress ${p} percent`,
+    },
+  };
+  const SURVEY_LANGS = [
+    { code: "de", label: "Deutsch", hint: "Umfrage auf Deutsch" },
+    { code: "en", label: "English", hint: "Survey in English" },
+  ];
+
   let state;
   let root;
   let websiteMode = "checking"; // "live" | "screenshot"
   let stepEnteredAt = Date.now();
   let saveChain = Promise.resolve();
-  let saveStatus = "idle"; // idle | pending | ok | error
+  let saveStatus = "idle";
   let fsTimers = [];
+
+  const lang = () => (state && UI[state.lang] ? state.lang : "de");
+  const u = () => UI[lang()];
+  const t = (v) => L(v, lang());
 
   // ── State ──────────────────────────────────────────────────
   function freshState() {
@@ -21,10 +69,11 @@
       anonymousId: uid(),
       participantId: null,
       stepIndex: 0,
+      lang: null,
       answers: {},
-      claimOrder: shuffle(cfg.claims.map((c) => c.id)),
       fivesecDone: false,
-      siteLang: cfg.website.defaultLanguage,
+      siteLang: W.defaultLanguage,
+      siteLangChosen: false,
       startedAt: null,
       completed: false,
       meta: { step_seconds: {} },
@@ -45,15 +94,6 @@
     } catch (e) {}
   }
 
-  function shuffle(list) {
-    const a = list.slice();
-    for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a;
-  }
-
   const step = () => steps[state.stepIndex];
 
   // ── Backend ────────────────────────────────────────────────
@@ -69,13 +109,15 @@
   }
 
   function collectMeta() {
+    const att = steps.flatMap((s) => s.questions || []).find((q) => q.attention);
     return {
       ...state.meta,
+      survey_lang: lang(),
       viewport: { w: window.innerWidth, h: window.innerHeight, dpr: window.devicePixelRatio || 1 },
       website_mode: websiteMode,
       website_lang: siteLang().code,
       website_path: siteLang().path,
-      claim_order: state.claimOrder,
+      attention_ok: att && state.answers[att.key] !== undefined ? state.answers[att.key] === att.attention : null,
       last_step: step().id,
       language: navigator.language,
     };
@@ -118,12 +160,12 @@
   }
 
   function saveLabel() {
-    if (PREVIEW) return "Vorschau · speichert nicht";
-    if (!db) return "Offline";
-    return { pending: "Speichert …", error: "Nicht gespeichert", ok: "Gespeichert", idle: "Automatisch gespeichert" }[saveStatus];
+    if (PREVIEW) return u().preview;
+    if (!db) return u().offline;
+    return u().save[saveStatus];
   }
 
-  // ── Website mode / proxy check ─────────────────────────────
+  // ── Website / Proxy ────────────────────────────────────────
   function siteLang() {
     return W.languages.find((l) => l.code === state.siteLang) || W.languages.find((l) => l.code === W.defaultLanguage) || W.languages[0];
   }
@@ -153,7 +195,7 @@
   function langPickerHtml() {
     const cur = siteLang();
     return `<div class="lang">
-      <span class="lang-label" id="lang-lbl">Sprache der Website</span>
+      <span class="lang-label" id="lang-lbl">${esc(u().siteLang)}</span>
       <div class="lang-dd">
         <button type="button" class="lang-btn" data-act="lang-toggle" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="lang-lbl">
           ${flag(cur.code)}<span>${esc(cur.label)}</span><svg class="chev" viewBox="0 0 12 12" width="12" height="12"><path d="M3 4.5L6 7.5L9 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -193,10 +235,28 @@
 
   function siteMarkup(id) {
     if (websiteMode === "live") {
-      return `<iframe id="${id}" src="${esc(siteSrc())}" title="Website im Test"
+      return `<iframe id="${id}" src="${esc(siteSrc())}" title="${esc(u().siteTitle)}"
         sandbox="allow-scripts allow-same-origin allow-popups" referrerpolicy="no-referrer"></iframe>`;
     }
-    return `<div class="shot" id="${id}"><img src="${esc(W.fallbackImage)}" alt="Startseite im Test"><span class="shot-note">${esc(W.fallbackLabel)}</span></div>`;
+    return `<div class="shot" id="${id}"><img src="${esc(W.fallbackImage)}" alt="${esc(u().siteTitle)}"><span class="shot-note">${esc(t(W.fallbackLabel))}</span></div>`;
+  }
+
+  // Enter in der eingebetteten Website: weiter zur nächsten Frage (gleiche Domain, daher möglich)
+  function bindIframeKeys(iframe) {
+    if (!iframe) return;
+    const attach = () => {
+      try {
+        iframe.contentDocument.addEventListener("keydown", (e) => {
+          if (e.key !== "Enter" || e.shiftKey || e.isComposing) return;
+          const tag = e.target?.tagName;
+          const editable = e.target?.isContentEditable || ["INPUT", "TEXTAREA", "SELECT", "BUTTON", "A"].includes(tag);
+          if (editable && !(e.metaKey || e.ctrlKey)) return;
+          e.preventDefault();
+          next();
+        });
+      } catch (err) {}
+    };
+    iframe.addEventListener("load", attach);
   }
 
   // Seite in Desktop-Breite rendern und auf die verfügbare Fläche skalieren
@@ -229,7 +289,7 @@
   }
 
   // Verstellbare Trennlinie zwischen Website und Fragen
-  const PANEL_KEY = cfg.storageKey + "-panel-width";
+  const PANEL_KEY = "kolsetu-interview-panel-width";
   const PANEL_DEFAULT = 460;
   function clampPanel(px, split) {
     const max = Math.max(320, split.clientWidth - 420);
@@ -274,6 +334,8 @@
   }
 
   // ── Validation ─────────────────────────────────────────────
+  const visibleQuestions = (s) => (s.questions || []).filter((q) => isVisible(q, state.answers));
+
   function isAnswered(q) {
     const a = state.answers;
     switch (q.type) {
@@ -292,7 +354,7 @@
   }
 
   function missingRequired() {
-    return (step().questions || []).filter((q) => q.required && !isAnswered(q));
+    return visibleQuestions(step()).filter((q) => q.required && !isAnswered(q));
   }
 
   function emailInvalid() {
@@ -309,18 +371,21 @@
   }
 
   async function next() {
+    if (document.querySelector(".fs")) return;
+    const s = step();
+    if (s.kind === "language" && !state.lang) return;
+    if (s.kind === "fivesec" || s.kind === "end") return;
     const missing = missingRequired();
     if (missing.length || emailInvalid()) {
       document.querySelectorAll(".q").forEach((el) => {
         const bad = missing.some((q) => q.key === el.dataset.key) || (el.dataset.type === "email" && emailInvalid());
         el.classList.toggle("invalid", bad);
       });
-      const first = document.querySelector(".q.invalid");
-      first?.scrollIntoView({ behavior: "smooth", block: "center" });
+      document.querySelector(".q.invalid")?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
     trackStepTime();
-    if (step().kind === "intro" && !state.startedAt) state.startedAt = new Date().toISOString();
+    if (s.kind === "intro" && !state.startedAt) state.startedAt = new Date().toISOString();
 
     let target = state.stepIndex + 1;
     if (steps[target]?.kind === "fivesec" && state.fivesecDone) target++;
@@ -338,7 +403,7 @@
       return;
     }
     render();
-    saveProgress(false);
+    if (state.stepIndex > 1) saveProgress(false);
   }
 
   function back() {
@@ -346,6 +411,16 @@
     let target = state.stepIndex - 1;
     if (steps[target]?.kind === "fivesec" && state.fivesecDone) target--;
     state.stepIndex = Math.max(0, target);
+    persist();
+    render();
+  }
+
+  function chooseSurveyLang(code) {
+    state.lang = code;
+    if (!state.siteLangChosen) state.siteLang = code === "en" ? "en" : "de";
+    persist();
+    trackStepTime();
+    state.stepIndex = 1;
     persist();
     render();
   }
@@ -361,47 +436,49 @@
     const idx = sections.indexOf(sec);
     return `
       <header class="sheader">
-        <div class="sh-brand"><span class="sh-title">${esc(cfg.study.title)}</span></div>
-        <div class="sh-progress" aria-label="Fortschritt ${progress()} Prozent">
-          <span class="sh-sec">${idx > 0 ? `<span class="sh-n">${idx}/${sections.length - 1}</span>` : ""}${esc(sec.title)}</span>
+        <div class="sh-brand"><span class="sh-title">${esc(t(cfg.study.title))}</span></div>
+        <div class="sh-progress" aria-label="${esc(u().progress(progress()))}">
+          <span class="sh-sec">${idx > 0 ? `<span class="sh-n">${idx}/${sections.length - 1}</span>` : ""}${esc(t(sec.title))}</span>
           <div class="meter"><i style="width:${progress()}%"></i></div>
         </div>
         <div class="sh-save"><span data-save class="save-state">${saveLabel()}</span></div>
       </header>`;
   }
 
-  function navHtml({ nextLabel = "Weiter", showBack = true, accent = false } = {}) {
-    const n = steps.filter((s) => s.kind !== "end").length;
+  function navHtml({ nextLabel, showBack = true, accent = false } = {}) {
+    const n = steps.filter((s) => s.kind !== "end" && s.kind !== "language").length;
+    const hasText = visibleQuestions(step()).some((q) => q.type === "text");
     return `
       <div class="nav">
-        ${showBack && state.stepIndex > 0 ? `<button class="btn ghost" data-act="back" type="button">Zurück</button>` : ""}
-        <span class="count">${String(state.stepIndex + 1).padStart(2, "0")} / ${String(n).padStart(2, "0")}</span>
+        ${showBack && state.stepIndex > 0 ? `<button class="btn ghost" data-act="back" type="button">${esc(u().back)}</button>` : ""}
+        <span class="count">${String(state.stepIndex).padStart(2, "0")} / ${String(n).padStart(2, "0")}</span>
         <span class="spacer"></span>
-        <span class="kbd"><b>Enter ↵</b></span>
-        <button class="btn ${accent ? "lg" : ""}" data-act="next" type="button">${esc(nextLabel)} <span class="arr">→</span></button>
+        <span class="kbd"><b>Enter ↵</b>${hasText ? ` · ${esc(u().newline)}` : ""}</span>
+        <button class="btn ${accent ? "lg" : ""}" data-act="next" type="button">${esc(nextLabel || u().next)} <span class="arr">→</span></button>
       </div>`;
   }
 
   // ── Rendering: questions ───────────────────────────────────
   function labelHtml(q) {
-    return `<div class="q-label" id="lbl-${q.key}">${esc(q.label)}${q.required ? `<span class="req">Pflicht</span>` : ""}</div>${q.hint ? `<div class="q-hint">${esc(q.hint)}</div>` : ""}`;
+    return `<div class="q-label" id="lbl-${q.key}" data-err="${esc(q.type === "email" ? u().emailInvalid : u().answerThis)}">${esc(t(q.label))}${q.required ? `<span class="req">${esc(u().required)}</span>` : ""}</div>${q.hint ? `<div class="q-hint">${esc(t(q.hint))}</div>` : ""}`;
   }
 
-  function optionButtons(q, options, { multi = false } = {}) {
+  function optionButtons(q, { multi = false } = {}) {
     const a = state.answers[q.key];
     const selected = (v) => (multi ? Array.isArray(a) && a.includes(v) : a === v);
     const full = multi && q.max && Array.isArray(a) && a.length >= q.max;
-    const all = q.other ? [...options, OTHER] : options;
+    const opts = q.options.map((o) => ({ value: optValue(o), label: t(o) }));
+    if (q.other) opts.push({ value: OTHER, label: u().other });
     return `<div class="opts" data-cols="${q.columns || 2}" style="--cols:${q.columns || 2}" role="${multi ? "group" : "radiogroup"}" aria-labelledby="lbl-${q.key}">
-      ${all
-        .map((o) => {
-          const on = selected(o);
-          return `<button type="button" class="opt ${multi ? "multi" : ""}" role="${multi ? "checkbox" : "radio"}" aria-checked="${on}" data-opt="${esc(o)}" ${full && !on ? "disabled" : ""}><span class="box"></span><span>${esc(o === OTHER ? "Andere, und zwar …" : o)}</span></button>`;
+      ${opts
+        .map(({ value, label }) => {
+          const on = selected(value);
+          return `<button type="button" class="opt ${multi ? "multi" : ""}" role="${multi ? "checkbox" : "radio"}" aria-checked="${on}" data-opt="${esc(value)}" ${full && !on ? "disabled" : ""}><span class="box"></span><span>${esc(label)}</span></button>`;
         })
         .join("")}
     </div>
-    ${q.other && selected(OTHER) ? `<input class="other-input" type="text" data-other="${q.key}" placeholder="Bitte kurz angeben" value="${esc(state.answers[q.key + "__andere"] || "")}">` : ""}
-    ${q.max ? `<div class="limit-note">${(Array.isArray(a) ? a.length : 0)} von max. ${q.max} gewählt</div>` : ""}`;
+    ${q.other && selected(OTHER) ? `<input class="other-input" type="text" data-other="${q.key}" placeholder="${esc(u().otherPh)}" value="${esc(state.answers[q.key + "__andere"] || "")}">` : ""}
+    ${q.max ? `<div class="limit-note">${esc(u().maxNote(Array.isArray(a) ? a.length : 0, q.max))}</div>` : ""}`;
   }
 
   function scaleButtons(key, scale) {
@@ -413,40 +490,44 @@
     </div>`;
   }
 
+  function scaleEnds(scale) {
+    const l = t(scale.left);
+    const r = t(scale.right);
+    return l || r ? `<div class="scale-ends"><span>${esc(l)}</span><span>${esc(r)}</span></div>` : "";
+  }
+
   function questionInner(q) {
     const a = state.answers;
     switch (q.type) {
       case "consent":
-        return `<button type="button" class="consent" data-consent="${q.key}" aria-checked="${a[q.key] === true}"><span class="box"></span><span>${esc(q.label)}</span></button>`;
+        return `<button type="button" class="consent" data-consent="${q.key}" aria-checked="${a[q.key] === true}"><span class="box"></span><span>${esc(t(q.label))}</span></button>`;
       case "text":
-        return `${labelHtml(q)}<textarea rows="${q.rows || 3}" data-text="${q.key}" placeholder="${esc(q.placeholder || "")}" aria-labelledby="lbl-${q.key}">${esc(a[q.key] || "")}</textarea>`;
+        return `${labelHtml(q)}<textarea rows="${q.rows || 3}" data-text="${q.key}" placeholder="${esc(t(q.placeholder) || "")}" aria-labelledby="lbl-${q.key}">${esc(a[q.key] || "")}</textarea>`;
       case "email":
-        return `${labelHtml(q)}<input type="email" autocomplete="email" data-text="${q.key}" placeholder="${esc(q.placeholder || "")}" value="${esc(a[q.key] || "")}">`;
+        return `${labelHtml(q)}<input type="email" autocomplete="email" data-text="${q.key}" placeholder="${esc(t(q.placeholder) || "")}" value="${esc(a[q.key] || "")}">`;
       case "single":
-        return `${labelHtml(q)}${optionButtons(q, q.options)}`;
+        return `${labelHtml(q)}${optionButtons(q)}`;
       case "multi":
-        return `${labelHtml(q)}${optionButtons(q, q.options, { multi: true })}`;
-      case "claimpick": {
-        const letters = state.claimOrder.map((id, i) => ({ id, letter: String.fromCharCode(65 + i) }));
-        return `${labelHtml(q)}<div class="opts" style="--cols:3" role="radiogroup">
-          ${letters.map(({ id, letter }) => `<button type="button" class="opt" role="radio" data-claim="${q.key}" data-val="${id}" aria-checked="${a[q.key] === id}"><span class="box"></span><span>Claim ${letter}</span></button>`).join("")}
-        </div>`;
+        return `${labelHtml(q)}${optionButtons(q, { multi: true })}`;
+      case "scale": {
+        const claim = q.showClaim ? `<blockquote class="claimq">${lang() === "en" ? "“" : "„"}${esc(W.claims[siteLang().code] || W.claims.de)}“</blockquote>` : "";
+        return `${labelHtml(q)}${claim}<div class="scale">${scaleButtons(q.key, q.scale)}${scaleEnds(q.scale)}</div>`;
       }
-      case "scale":
-        return `${labelHtml(q)}<div class="scale">${scaleButtons(q.key, q.scale)}<div class="scale-ends"><span>${esc(q.scale.left)}</span><span>${esc(q.scale.right)}</span></div></div>`;
       case "grid":
         return `${labelHtml(q)}<div class="grid-q">
-          <div class="grid-head"><span></span><div class="scale-ends"><span>${esc(q.scale.left)}</span><span>${esc(q.scale.right)}</span></div></div>
-          ${q.items.map((it) => `<div class="grid-row"><span>${esc(it.label)}</span>${scaleButtons(it.key, q.scale)}</div>`).join("")}
+          <div class="grid-head"><span></span>${scaleEnds(q.scale)}</div>
+          ${q.items.map((it) => `<div class="grid-row"><span>${esc(t(it.label))}</span>${scaleButtons(it.key, q.scale)}</div>`).join("")}
         </div>`;
       case "percent": {
         const v = a[q.key];
-        const has = v !== undefined;
-        return `${labelHtml(q)}<div class="percent">
+        const unknown = v === "unknown";
+        const has = v !== undefined && !unknown;
+        return `${labelHtml(q)}<div class="percent ${unknown ? "is-unknown" : ""}">
           <input type="range" min="0" max="100" step="5" value="${has ? v : 50}" data-percent="${q.key}" style="--p:${has ? v : 0}%" aria-labelledby="lbl-${q.key}">
           <output class="${has ? "" : "empty"}" data-out="${q.key}">${has ? v + " %" : "– %"}</output>
           <div class="percent-ticks"><span>0 %</span><span>50 %</span><span>100 %</span></div>
-        </div>`;
+        </div>
+        ${q.allowUnknown ? `<div><button type="button" class="opt multi unknown-btn" role="checkbox" aria-checked="${unknown}" data-unknown="${q.key}"><span class="box"></span><span>${esc(u().unknown)}</span></button></div>` : ""}`;
       }
       default:
         return "";
@@ -454,13 +535,31 @@
   }
 
   function questionsHtml(s) {
-    return `<div class="questions">${(s.questions || [])
+    return `<div class="questions">${visibleQuestions(s)
       .map((q) => `<div class="q" data-key="${q.key}" data-type="${q.type}">${questionInner(q)}</div>`)
       .join("")}</div>`;
   }
 
   function rerenderQuestion(key) {
-    const q = step().questions.find((x) => x.key === key || x.items?.some((i) => i.key === key));
+    const s = step();
+    // Bedingte Fragen: ganzen Block neu aufbauen, damit Folgefragen erscheinen/verschwinden
+    if ((s.questions || []).some((q) => q.showIf)) {
+      const box = document.querySelector(".questions");
+      if (box) {
+        const invalid = [...box.querySelectorAll(".q.invalid")].map((el) => el.dataset.key);
+        box.outerHTML = questionsHtml(s);
+        const fresh = document.querySelector(".questions");
+        if (fresh) fresh.style.animation = "none";
+        invalid.forEach((k) => {
+          const q = s.questions.find((x) => x.key === k);
+          if (q && !isAnswered(q)) document.querySelector(`.q[data-key="${k}"]`)?.classList.add("invalid");
+        });
+        const other = document.querySelector(`.q[data-key="${key}"] [data-other]`);
+        if (other && !other.value) other.focus();
+        return;
+      }
+    }
+    const q = s.questions.find((x) => x.key === key || x.items?.some((i) => i.key === key));
     const el = document.querySelector(`.q[data-key="${q.key}"]`);
     if (!el) return;
     el.innerHTML = questionInner(q);
@@ -469,100 +568,107 @@
     if (other && !other.value) other.focus();
   }
 
-  function stimulusHtml(s) {
-    if (s.stimulus === "claims") {
-      return `<div class="claims">${state.claimOrder
-        .map((id, i) => `<div class="claim"><b>${String.fromCharCode(65 + i)}</b><q>${esc(window.Common.claimText(id))}</q></div>`)
-        .join("")}</div>`;
-    }
-    if (s.stimulus === "linkedin") {
-      const m = cfg.linkedinMessage;
-      return `<div class="dm" aria-label="Beispielnachricht">
-        <div class="dm-head"><span class="dm-avatar">${esc(m.sender[0])}</span><div><strong>${esc(m.sender)}</strong><span>${esc(m.senderRole)}</span></div></div>
-        <div class="dm-body"><div class="bubble">${esc(m.body)}</div></div>
-      </div>`;
-    }
-    return "";
-  }
-
   // ── Rendering: screens ─────────────────────────────────────
   function render() {
     clearFsTimers();
     const s = step();
     stepEnteredAt = Date.now();
-    document.title = `${sections.find((x) => x.id === s.section).title} · ${cfg.study.title}`;
+    document.documentElement.lang = lang();
+    document.title = `${t(sections.find((x) => x.id === s.section).title)} · ${t(cfg.study.title)}`;
 
+    if (s.kind === "language") return renderLanguage(s);
     if (s.kind === "end") return renderEnd();
-
     if (s.layout === "website") return renderWebsite(s);
 
-    const body =
-      s.kind === "intro" ? introHtml(s) : s.kind === "fivesec" ? fivesecBriefHtml(s) : standardHtml(s);
+    const body = s.kind === "intro" ? introHtml(s) : s.kind === "fivesec" ? fivesecBriefHtml(s) : standardHtml(s);
 
     root.innerHTML = `
-      
       <div class="page">
         ${headerHtml()}
         <main class="main">
           <div class="stage"><div class="content">${body}</div></div>
-          ${s.kind === "fivesec" ? "" : navHtml({ nextLabel: s.kind === "intro" ? "Los geht’s" : nextLabelFor(), showBack: s.kind !== "intro", accent: s.kind === "intro" })}
+          ${s.kind === "fivesec" ? "" : navHtml({ nextLabel: s.kind === "intro" ? u().start : nextLabelFor(), accent: s.kind === "intro" })}
+        </main>
+      </div>`;
+    window.scrollTo(0, 0);
+  }
+
+  function renderLanguage() {
+    root.innerHTML = `
+      <div class="page">
+        <header class="sheader">
+          <div class="sh-brand"><span class="sh-title">${esc(L(cfg.study.title, "de"))} · ${esc(L(cfg.study.title, "en"))}</span></div>
+          <div></div>
+          <div class="sh-save"><span data-save class="save-state">${saveLabel()}</span></div>
+        </header>
+        <main class="main">
+          <div class="stage"><div class="content">
+            <div class="eyebrow">${esc(cfg.study.institution)}</div>
+            <h1 class="headline">Sprache wählen<br><span class="muted-head">Choose your language</span></h1>
+            <div class="langpick">
+              ${SURVEY_LANGS.map((l) => `<button type="button" class="langcard" data-survey-lang="${l.code}" aria-pressed="${state.lang === l.code}">
+                ${flag(l.code)}
+                <span class="langcard-text"><strong>${esc(l.label)}</strong><span>${esc(l.hint)}</span></span>
+                <span class="arr">→</span>
+              </button>`).join("")}
+            </div>
+          </div></div>
         </main>
       </div>`;
     window.scrollTo(0, 0);
   }
 
   function nextLabelFor() {
-    return steps[state.stepIndex + 1]?.kind === "end" ? "Absenden" : "Weiter";
+    return steps[state.stepIndex + 1]?.kind === "end" ? u().submit : u().next;
   }
 
   function introHtml(s) {
     return `
-      <div class="eyebrow">${esc(s.eyebrow)}</div>
-      <h1 class="headline">Wie viel Vertrauen braucht <em>KI</em> im Kundenservice?</h1>
-      <p class="lead">${esc(s.lead)}</p>
-      <div class="facts">${s.facts.map(([t, d]) => `<div class="fact"><strong>${esc(t)}</strong><span>${esc(d)}</span></div>`).join("")}</div>
+      <div class="eyebrow">${esc(t(s.eyebrow))}</div>
+      <h1 class="headline">${esc(t(s.title))}</h1>
+      <p class="lead">${esc(t(s.lead))}</p>
+      <div class="facts">${s.facts.map(([ti, d]) => `<div class="fact"><strong>${esc(t(ti))}</strong><span>${esc(t(d))}</span></div>`).join("")}</div>
       ${questionsHtml(s)}
-      ${!db && !PREVIEW ? `<div class="notice">Die Datenbank ist nicht erreichbar. Bitte laden Sie die Seite neu.</div>` : ""}`;
+      ${!db && !PREVIEW ? `<div class="notice">${esc(u().dbDown)}</div>` : ""}`;
   }
 
   function standardHtml(s) {
     return `
-      <div class="eyebrow">${esc(sections.find((x) => x.id === s.section).title)}</div>
-      <h1 class="headline">${esc(s.title)}</h1>
-      ${s.lead ? `<p class="lead">${esc(s.lead)}</p>` : ""}
-      ${s.task ? `<div class="task">${esc(s.task)}</div>` : ""}
-      ${stimulusHtml(s)}
+      <div class="eyebrow">${esc(t(sections.find((x) => x.id === s.section).title))}</div>
+      <h1 class="headline">${esc(t(s.title))}</h1>
+      ${s.lead ? `<p class="lead">${esc(t(s.lead))}</p>` : ""}
+      ${s.task ? `<div class="task">${esc(t(s.task))}</div>` : ""}
       ${questionsHtml(s)}`;
   }
 
   function fivesecBriefHtml(s) {
     return `
-      <div class="eyebrow">Website-Test · Teil 1</div>
-      <h1 class="headline">${esc(s.title)}</h1>
-      <p class="lead">${esc(s.lead)}</p>
+      <div class="eyebrow">${esc(u().part1)}</div>
+      <h1 class="headline">${esc(t(s.title))}</h1>
+      <p class="lead">${esc(t(s.lead))}</p>
       ${langPickerHtml()}
-      <ol class="brief">${s.instructions.map(([t, d]) => `<li><div><strong>${esc(t)}</strong><span>${esc(d)}</span></div></li>`).join("")}</ol>
+      <ol class="brief">${s.instructions.map(([ti, d]) => `<li><div><strong>${esc(t(ti))}</strong><span>${esc(t(d))}</span></div></li>`).join("")}</ol>
       <div class="fivesec-cta">
-        <button class="btn lg" data-act="fivesec" type="button" ${websiteMode === "checking" ? "disabled" : ""}>Ich bin bereit <span class="arr">→</span></button>
-        <span class="hint">${websiteMode === "checking" ? "Seite wird vorbereitet …" : `Countdown ${W.countdownSeconds} s, dann ${W.exposureSeconds} s Website`}</span>
+        <button class="btn lg" data-act="fivesec" type="button" ${websiteMode === "checking" ? "disabled" : ""}>${esc(u().ready)} <span class="arr">→</span></button>
+        <span class="hint">${esc(websiteMode === "checking" ? u().preparing : u().cdHint(W.countdownSeconds, W.exposureSeconds))}</span>
       </div>
-      <div style="margin-top:28px"><button class="btn ghost" data-act="back" type="button">Zurück</button></div>`;
+      <div style="margin-top:28px"><button class="btn ghost" data-act="back" type="button">${esc(u().back)}</button></div>`;
   }
 
   function renderWebsite(s) {
     const existing = root.querySelector(".split");
     const panel = `
       <div class="panel-scroll">
-        <div class="eyebrow">Website-Test · Teil 2</div>
-        <h1 class="headline">${esc(s.title)}</h1>
-        ${s.lead ? `<p class="lead">${esc(s.lead)}</p>` : ""}
-        ${s.task ? `<div class="task">${esc(s.task)}</div>` : ""}
+        <div class="eyebrow">${esc(u().part2)}</div>
+        <h1 class="headline">${esc(t(s.title))}</h1>
+        ${s.lead ? `<p class="lead">${esc(t(s.lead))}</p>` : ""}
+        ${s.task ? `<div class="task">${esc(t(s.task))}</div>` : ""}
         ${questionsHtml(s)}
       </div>
       ${navHtml({ nextLabel: nextLabelFor() })}`;
 
     if (existing) {
-      // iframe behalten (Scrollposition bleibt erhalten), nur Panel + Rail tauschen
+      // iframe behalten (Scrollposition bleibt erhalten), nur Panel + Kopfzeile tauschen
       existing.querySelector(".panel").innerHTML = panel;
       existing.querySelector(".panel-scroll").scrollTop = 0;
       root.querySelector(".sheader").outerHTML = headerHtml();
@@ -570,7 +676,6 @@
     }
 
     root.innerHTML = `
-      
       <div class="page is-website">
         ${headerHtml()}
         <main class="main">
@@ -579,18 +684,19 @@
               <div class="chrome">
                 <span class="lights"><i></i><i></i><i></i></span>
                 <span class="url">${flag(siteLang().code)}${esc(siteUrlLabel())}</span>
-                <span class="tag ${websiteMode === "live" ? "live" : ""}">${websiteMode === "live" ? "● live" : "Screenshot"}</span>
-                <button class="tool" type="button" data-act="reload-site" title="Seite neu laden">↻</button>
+                <span class="tag ${websiteMode === "live" ? "live" : ""}">${websiteMode === "live" ? "● live" : esc(u().screenshot)}</span>
+                <button class="tool" type="button" data-act="reload-site" title="${esc(u().reload)}">↻</button>
                 <button class="tool mobile-full" type="button" data-act="toggle-full">⤢</button>
               </div>
               <div class="viewport">${siteMarkup("site")}</div>
             </section>
-            <div class="gutter" role="separator" aria-orientation="vertical" aria-label="Breite anpassen" tabindex="0" title="Ziehen, um die Breite zu ändern · Doppelklick: zurücksetzen"><span></span></div>
+            <div class="gutter" role="separator" aria-orientation="vertical" aria-label="${esc(u().gutterAria)}" tabindex="0" title="${esc(u().gutter)}"><span></span></div>
             <aside class="panel">${panel}</aside>
           </div>
         </main>
       </div>`;
     window.scrollTo(0, 0);
+    bindIframeKeys(document.getElementById("site"));
     setupGutter();
     watchFit();
   }
@@ -601,10 +707,10 @@
       <div class="center-screen">
         <div class="content" style="max-width:640px">
           <div class="end-mark"></div>
-          <h1 class="headline">${esc(s.title)}</h1>
-          <p class="lead">${esc(s.lead)}</p>
+          <h1 class="headline">${esc(t(s.title))}</h1>
+          <p class="lead">${esc(t(s.lead))}</p>
           <div data-end-status></div>
-          ${PREVIEW ? `<div class="notice info">Vorschau: Es wurde nichts gespeichert. <button class="btn ghost" data-act="restart" type="button" style="margin-left:8px;height:38px">Neu starten</button></div>` : ""}
+          ${PREVIEW ? `<div class="notice info">${esc(u().previewEnd)} <button class="btn ghost" data-act="restart" type="button" style="margin-left:8px;height:38px">${esc(u().restart)}</button></div>` : ""}
         </div>
       </div>`;
   }
@@ -612,10 +718,10 @@
   function renderEndError() {
     const el = document.querySelector("[data-end-status]");
     if (!el) return;
-    el.innerHTML = `<div class="notice">Ihre letzten Antworten konnten nicht übertragen werden. Bitte prüfen Sie Ihre Verbindung. <button class="btn" data-act="retry-save" type="button" style="margin-top:10px;height:40px">Erneut senden</button></div>`;
+    el.innerHTML = `<div class="notice">${esc(u().endErr)} <button class="btn" data-act="retry-save" type="button" style="margin-top:10px;height:40px">${esc(u().retry)}</button></div>`;
   }
 
-  // ── Five-second test ───────────────────────────────────────
+  // ── Website-Test (Teil 1) ──────────────────────────────────
   function clearFsTimers() {
     fsTimers.forEach(clearTimeout);
     fsTimers = [];
@@ -647,15 +753,14 @@
     let n = W.countdownSeconds;
     const tick = () => {
       if (n > 0) {
-        countEl.innerHTML = `<span class="num" key="${n}">${n}</span><span class="sub">Gleich geht’s los</span>`;
+        countEl.innerHTML = `<span class="num">${n}</span><span class="sub">${esc(u().startingSoon)}</span>`;
         n--;
         fsTimers.push(setTimeout(tick, 1000));
       } else if (loaded) {
         expose();
       } else {
         waitingForLoad = true;
-        countEl.innerHTML = `<div class="fs-msg"><div class="spinner"></div><p>Die Seite lädt noch, einen Moment …</p></div>`;
-        // spätestens nach 8 s trotzdem zeigen
+        countEl.innerHTML = `<div class="fs-msg"><div class="spinner"></div><p>${esc(u().loading)}</p></div>`;
         fsTimers.push(setTimeout(() => waitingForLoad && expose(), 8000));
       }
     };
@@ -682,7 +787,6 @@
         if (left > 0) fsTimers.push(setTimeout(upd, 100));
       };
       upd();
-      // Fokus in die Seite, damit Scrollen per Tastatur/Trackpad sofort geht
       try { stage.querySelector("iframe")?.focus(); } catch (e) {}
 
       fsTimers.push(
@@ -691,7 +795,7 @@
           frame.remove();
           bar.remove();
           timer.remove();
-          stage.insertAdjacentHTML("beforeend", `<div class="fs-msg"><h2>Zeit ist um.</h2><p>Die Seite ist ausgeblendet. Jetzt ein paar Fragen dazu.</p></div>`);
+          stage.insertAdjacentHTML("beforeend", `<div class="fs-msg"><h2>${esc(u().timeUp)}</h2><p>${esc(u().timeUpSub)}</p></div>`);
           state.fivesecDone = true;
           state.meta.fivesec = {
             mode: websiteMode,
@@ -707,7 +811,11 @@
             setTimeout(() => {
               stage.remove();
               document.body.style.overflow = "";
-              next();
+              trackStepTime();
+              state.stepIndex++;
+              persist();
+              render();
+              saveProgress(false);
             }, 1800)
           );
         }, ms)
@@ -720,69 +828,71 @@
   // ── Events ─────────────────────────────────────────────────
   function bind() {
     root.addEventListener("click", (e) => {
-      const t = e.target.closest("button");
-      if (!t || t.disabled) return;
+      const b = e.target.closest("button");
+      if (!b || b.disabled) return;
       const a = state.answers;
 
-      if (t.dataset.act === "next") return next();
-      if (t.dataset.act === "back") return back();
-      if (t.dataset.act === "fivesec") return startFivesec();
-      if (t.dataset.act === "lang-toggle") {
-        const menu = t.parentElement.querySelector(".lang-menu");
+      if (b.dataset.surveyLang) return chooseSurveyLang(b.dataset.surveyLang);
+      if (b.dataset.act === "next") return next();
+      if (b.dataset.act === "back") return back();
+      if (b.dataset.act === "fivesec") return startFivesec();
+      if (b.dataset.act === "lang-toggle") {
+        const menu = b.parentElement.querySelector(".lang-menu");
         const open = menu.hidden;
         menu.hidden = !open;
-        t.setAttribute("aria-expanded", String(open));
+        b.setAttribute("aria-expanded", String(open));
         if (open) menu.querySelector('[aria-selected="true"]')?.focus();
         return;
       }
-      if (t.dataset.lang) {
-        state.siteLang = t.dataset.lang;
+      if (b.dataset.lang) {
+        state.siteLang = b.dataset.lang;
+        state.siteLangChosen = true;
         persist();
-        const picker = t.closest(".lang");
-        picker.outerHTML = langPickerHtml();
+        b.closest(".lang").outerHTML = langPickerHtml();
         root.querySelector(".lang-btn")?.focus();
         return;
       }
-      if (t.dataset.act === "reload-site") {
+      if (b.dataset.act === "reload-site") {
         const f = document.getElementById("site");
         if (f?.tagName === "IFRAME") f.src = siteSrc();
         return;
       }
-      if (t.dataset.act === "toggle-full") {
+      if (b.dataset.act === "toggle-full") {
         document.querySelector(".browser")?.classList.toggle("full");
         return fitSite();
       }
-      if (t.dataset.act === "restart") {
+      if (b.dataset.act === "restart") {
         localStorage.removeItem(STORAGE_KEY);
         state = freshState();
         return render();
       }
-      if (t.dataset.act === "retry-save") {
+      if (b.dataset.act === "retry-save") {
         return saveProgress(true).then((ok) => {
           const el = document.querySelector("[data-end-status]");
-          if (el) el.innerHTML = ok ? `<div class="notice info">Übertragen. Danke!</div>` : el.innerHTML;
+          if (el && ok) el.innerHTML = `<div class="notice info">${esc(u().sent)}</div>`;
         });
       }
 
-      if (t.dataset.consent) {
-        a[t.dataset.consent] = !a[t.dataset.consent];
+      if (b.dataset.consent) {
+        a[b.dataset.consent] = !a[b.dataset.consent];
         persist();
-        return rerenderQuestion(t.dataset.consent);
+        return rerenderQuestion(b.dataset.consent);
       }
-      if (t.dataset.scale) {
-        a[t.dataset.scale] = Number(t.dataset.val);
+      if (b.dataset.scale) {
+        a[b.dataset.scale] = Number(b.dataset.val);
         persist();
-        return rerenderQuestion(t.dataset.scale);
+        return rerenderQuestion(b.dataset.scale);
       }
-      if (t.dataset.claim) {
-        a[t.dataset.claim] = t.dataset.val;
+      if (b.dataset.unknown) {
+        const k = b.dataset.unknown;
+        a[k] = a[k] === "unknown" ? undefined : "unknown";
         persist();
-        return rerenderQuestion(t.dataset.claim);
+        return rerenderQuestion(k);
       }
-      if (t.dataset.opt !== undefined) {
-        const qEl = t.closest(".q");
+      if (b.dataset.opt !== undefined) {
+        const qEl = b.closest(".q");
         const q = step().questions.find((x) => x.key === qEl.dataset.key);
-        const v = t.dataset.opt;
+        const v = b.dataset.opt;
         if (q.type === "multi") {
           const list = Array.isArray(a[q.key]) ? a[q.key].slice() : [];
           const i = list.indexOf(v);
@@ -798,42 +908,48 @@
     });
 
     root.addEventListener("input", (e) => {
-      const t = e.target;
+      const el = e.target;
       const a = state.answers;
-      if (t.dataset.text) a[t.dataset.text] = t.value;
-      if (t.dataset.other) a[t.dataset.other + "__andere"] = t.value;
-      if (t.dataset.percent) {
-        a[t.dataset.percent] = Number(t.value);
-        t.style.setProperty("--p", t.value + "%");
-        const out = document.querySelector(`[data-out="${t.dataset.percent}"]`);
-        out.textContent = t.value + " %";
+      if (el.dataset.text) a[el.dataset.text] = el.value;
+      if (el.dataset.other) a[el.dataset.other + "__andere"] = el.value;
+      if (el.dataset.percent) {
+        const k = el.dataset.percent;
+        a[k] = Number(el.value);
+        el.style.setProperty("--p", el.value + "%");
+        const out = document.querySelector(`[data-out="${k}"]`);
+        out.textContent = el.value + " %";
         out.classList.remove("empty");
-        t.closest(".q")?.classList.remove("invalid");
+        const qEl = el.closest(".q");
+        qEl?.classList.remove("invalid");
+        qEl?.querySelector(".percent")?.classList.remove("is-unknown");
+        qEl?.querySelector("[data-unknown]")?.setAttribute("aria-checked", "false");
       }
-      if (t.dataset.text) {
-        const q = t.closest(".q");
-        if (q && t.value.trim()) q.classList.remove("invalid");
+      if (el.dataset.text) {
+        const q = el.closest(".q");
+        if (q && el.value.trim()) q.classList.remove("invalid");
       }
       persist();
     });
 
+    // Enter = weiter (wie bei Typeform), Shift + Enter = neue Zeile in Textfeldern
     root.addEventListener("keydown", (e) => {
       if (e.key !== "Enter" || e.shiftKey || e.isComposing) return;
-      if (e.target.tagName === "TEXTAREA") {
-        if (e.metaKey || e.ctrlKey) { e.preventDefault(); next(); }
-        return;
+      const el = e.target;
+      if (el.closest?.(".lang-dd") || el.closest?.(".gutter")) return;
+      if (el.tagName === "BUTTON") {
+        const isAnswerBtn = el.dataset.opt !== undefined || el.dataset.scale || el.dataset.consent || el.dataset.unknown;
+        if (!isAnswerBtn) return; // Navigations-Buttons normal auslösen
       }
-      if (e.target.tagName === "BUTTON") return;
       const s = step();
-      if (s.kind === "fivesec" || s.kind === "end") return;
+      if (s.kind === "fivesec" || s.kind === "end" || s.kind === "language") return;
       e.preventDefault();
       next();
     });
 
     document.addEventListener("keydown", (e) => {
-      if (e.key !== "Enter" || e.target !== document.body) return;
+      if (e.key !== "Enter" || e.shiftKey || e.target !== document.body) return;
       const s = step();
-      if (s.kind === "fivesec" || s.kind === "end" || document.querySelector(".fs")) return;
+      if (s.kind === "fivesec" || s.kind === "end" || s.kind === "language" || document.querySelector(".fs")) return;
       e.preventDefault();
       next();
     });
@@ -858,8 +974,8 @@
   async function start() {
     root = document.getElementById("app");
     state = load();
+    if (!state.lang) state.stepIndex = 0;
     if (state.completed) state.stepIndex = steps.length - 1;
-    // Abgebrochener 5-Sekunden-Test: nicht erneut zeigen, wenn schon gesehen
     if (step().kind === "fivesec" && state.fivesecDone) state.stepIndex++;
     bind();
     render();

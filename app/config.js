@@ -6,12 +6,13 @@ window.STUDY_CONFIG = {
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdnB2aWRmaGt1eHZjemNremRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUzNDI3MDAsImV4cCI6MjExMDkxODcwMH0.dpHqOwqJouyEJxifAXaS1w0G2t_KMNuBBCutlwrA0u8",
 
   conditionId: "kolsetu_website",
-  storageKey: "kolsetu-interview-v1",
+  // v2: Fragebogen nach Team-Call überarbeitet (alter Zwischenstand im Browser wird ignoriert)
+  storageKey: "kolsetu-interview-v2",
 
   study: {
-    title: "Vertrauen in KI im Kundenservice",
+    title: { de: "Kundenservice im KI-Zeitalter", en: "Customer service in the age of AI" },
     institution: "Masterprojekt · Macromedia Hochschule",
-    minutes: 15,
+    minutes: 25,
   },
 
   website: {
@@ -32,25 +33,18 @@ window.STUDY_CONFIG = {
     desktopWidth: 1280,
     countdownSeconds: 3,
     // Cookie-Banner von kolsetu.com vorab mit „nur essenzielle Cookies“ beantworten,
-    // damit er im 5-Sekunden-Test nichts verdeckt (und kein Analytics-Tracking läuft).
+    // damit er im Website-Test nichts verdeckt (und kein Analytics-Tracking läuft).
     preConsent: true,
     // Fallback, falls der Live-Proxy nicht erreichbar ist (z. B. lokal ohne Server)
     fallbackImage: "/app/stimuli/kolsetu-startseite-2026-11-13.jpg",
-    fallbackLabel: "Screenshot vom 13.11.2026",
-  },
-
-  // Claim-Vergleich (Reihenfolge wird pro Person zufällig gemischt, ohne Absender)
-  claims: [
-    { id: "kolsetu", text: "Digitale Mitarbeiter für profitables Wachstum." },
-    { id: "parloa", text: "AI Agents, die Kundengespräche in Loyalität verwandeln." },
-    { id: "retell", text: "KI-Sprachagenten der nächsten Generation für Ihr Contact Center." },
-  ],
-
-  // LinkedIn-Test: fiktive Anbieter-Nachricht
-  linkedinMessage: {
-    sender: "Lena M.",
-    senderRole: "Account Executive · KI-Sprachagenten für den Kundenservice",
-    body:
-      "Hallo [Name],\n\nich habe gesehen, dass Sie den Kundenservice bei [Unternehmen] verantworten. Viele Teams in Ihrer Branche nutzen inzwischen KI-Sprachagenten, um Standardanfragen rund um die Uhr abschließend zu bearbeiten, DSGVO-konform und mit Übergabe an Ihr Team, wenn es komplex wird.\n\nHätten Sie nächste Woche 15 Minuten für einen kurzen Austausch? Ich zeige Ihnen gern, wie das bei einem vergleichbaren Unternehmen aussieht.\n\nViele Grüße\nLena",
+    fallbackLabel: { de: "Screenshot vom 13.11.2026", en: "Screenshot from 13 Nov 2026" },
+    // Hauptbotschaft (H1) je Sprachversion, wird bei der Verständlichkeitsfrage als Zitat gezeigt
+    claims: {
+      de: "Digitale Mitarbeiter für profitables Wachstum.",
+      en: "Digital employees for profitable growth.",
+      fr: "Employés numériques pour une croissance rentable.",
+      es: "Empleados digitales para un crecimiento rentable.",
+      cs: "Digitální zaměstnanci pro ziskový růst.",
+    },
   },
 };

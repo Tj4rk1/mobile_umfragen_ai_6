@@ -1,6 +1,15 @@
 // Auswertung: Login, Kennzahlen, Antworten je Frage, Teilnehmende, Export.
 (function () {
-  const { cfg, sections, steps, db, OTHER, esc, shortId, answerFields, claimText, fmtDate, fmtDuration } = window.Common;
+  const { cfg, sections, steps, db, OTHER, L, esc, shortId, answerFields, fmtDate, fmtDuration } = window.Common;
+  const STUDY_TITLE = L(cfg.study.title);
+  const LANG_LABEL = { de: "DE", en: "EN" };
+  const attnQ = steps.flatMap((s) => s.questions || []).find((q) => q.attention);
+  function attentionPill(p) {
+    const ok = p.meta?.attention_ok;
+    if (ok === true) return `<span class="pill ok">✓</span>`;
+    if (ok === false) return `<span class="pill warn" title="Aufmerksamkeitscheck nicht bestanden">✗ Check</span>`;
+    return "–";
+  }
 
   let root;
   const ui = { tab: "fragen", onlyCompleted: false, openParticipant: null };
@@ -72,7 +81,7 @@
     root.innerHTML = `
       <div class="shell admin">
         <aside class="rail">
-          <div class="brandmark"><span class="dot"></span><div><strong>Auswertung</strong><span>${esc(cfg.study.title)}</span></div></div>
+          <div class="brandmark"><span class="dot"></span><div><strong>Auswertung</strong><span>${esc(STUDY_TITLE)}</span></div></div>
           <ol class="toc">
             ${[
               ["fragen", "Nach Fragen"],
@@ -147,7 +156,7 @@
     for (let i = scale.min; i <= scale.max; i++) counts.set(i, 0);
     values.forEach((v) => counts.set(v, (counts.get(v) || 0) + 1));
     const max = Math.max(...counts.values());
-    return `<div class="stat-line">Ø ${mean.toFixed(2).replace(".", ",")} · Median ${String(median(values)).replace(".", ",")} · ${esc(scale.left)} (${scale.min}) → ${esc(scale.right)} (${scale.max})</div>
+    return `<div class="stat-line">Ø ${mean.toFixed(2).replace(".", ",")} · Median ${String(median(values)).replace(".", ",")} · ${esc(L(scale.left)) || scale.min} (${scale.min}) → ${esc(L(scale.right)) || scale.max} (${scale.max})</div>
       <div class="bars">${[...counts.entries()]
         .map(([k, c]) => `<div class="bar"><span>${k}</span><span class="track"><i style="width:${max ? (c / max) * 100 : 0}%"></i></span><span class="c">${c}</span></div>`)
         .join("")}</div>`;
@@ -162,7 +171,7 @@
       const secSteps = steps.filter((s) => s.section === section.id && s.questions?.length);
       const qs = secSteps.flatMap((s) => s.questions).filter((q) => !["consent", "email"].includes(q.type));
       if (!qs.length) continue;
-      html += `<h2 class="sec-title">${esc(section.title)}</h2>`;
+      html += `<h2 class="sec-title">${esc(L(section.title))}</h2>`;
 
       for (const q of qs) {
         const keys = q.type === "grid" ? q.items.map((i) => i.key) : [q.key];
@@ -177,7 +186,7 @@
                 .map(({ p, a }) => `<div class="quote"><div class="who"><a href="#" data-open="${p.id}">${shortId(p.id)}</a><br>${esc(personTag(a))}</div><p>${esc(a[q.key].value)}</p></div>`)
                 .join("")}</div>`
             : `<div class="empty">Noch keine Antworten.</div>`;
-        } else if (q.type === "single" || q.type === "claimpick" || q.type === "multi") {
+        } else if (q.type === "single" || q.type === "multi") {
           const counts = new Map();
           const others = [];
           for (const { p, a } of rows) {
@@ -188,7 +197,6 @@
                 others.push({ p, text: part.slice(OTHER.length + 1).trim() });
                 label = OTHER;
               }
-              if (q.type === "claimpick") label = claimText(part);
               counts.set(label, (counts.get(label) || 0) + 1);
             }
           }
@@ -207,27 +215,26 @@
           inner = q.items
             .map((it) => {
               const vals = rows.filter(({ a }) => a[it.key]).map(({ a }) => Number(a[it.key].numeric_value));
-              return `<div style="margin-bottom:16px"><strong style="font-size:14px">${esc(it.label)}</strong>${scaleHtml(vals, q.scale)}</div>`;
+              return `<div style="margin-bottom:16px"><strong style="font-size:14px">${esc(L(it.label))}</strong>${scaleHtml(vals, q.scale)}</div>`;
             })
             .join("");
         }
 
         html += `<div class="acard">
-          <div class="acard-head">${q.ref ? `<span class="ref">${esc(q.ref)}</span>` : ""}<h3>${esc(q.label)}</h3><span class="n">n = ${rows.length}</span></div>
+          <div class="acard-head">${q.ref ? `<span class="ref">${esc(q.ref)}</span>` : ""}<h3>${esc(L(q.label))}${q.attention ? ` <span class="pill">Kontrollfrage, richtig: ${q.attention}</span>` : ""}${q.showIf ? ` <span class="pill">nur bei Outsourcing</span>` : ""}</h3><span class="n">n = ${rows.length}</span></div>
           ${inner}
         </div>`;
       }
     }
 
     // Claim-Zuordnung zur Info
-    html += `<div class="acard"><div class="acard-head"><h3>Claims im Vergleich</h3></div><div class="stat-line">${cfg.claims.map((c) => `${esc(c.id)}: „${esc(c.text)}“`).join("<br>")}</div></div>`;
     return html;
   }
 
   function lastStepLabel(p) {
     const id = p.meta?.last_step;
     const s = steps.find((x) => x.id === id);
-    return s ? sections.find((x) => x.id === s.section)?.title + " · " + (s.title || "").slice(0, 28) : "–";
+    return s ? L(sections.find((x) => x.id === s.section)?.title) + " · " + L(s.title).slice(0, 28) : "–";
   }
 
   function participantsHtml() {
@@ -235,7 +242,7 @@
     const list = visibleParticipants();
     if (!list.length) return `<div class="empty">Noch keine Teilnehmenden.</div>`;
     return `<div class="admin-table-wrap"><table class="pt">
-      <thead><tr><th>ID</th><th>Gestartet</th><th>Status</th><th>Dauer</th><th>Rolle · Branche</th><th>Website</th><th>Zuletzt</th></tr></thead>
+      <thead><tr><th>ID</th><th>Gestartet</th><th>Status</th><th>Dauer</th><th>Rolle · Branche</th><th>Sprache</th><th>Check</th><th>Website</th><th>Zuletzt</th></tr></thead>
       <tbody>${list
         .map((p) => {
           const a = byP.get(p.id) || {};
@@ -245,7 +252,9 @@
             <td>${p.status === "completed" ? `<span class="pill ok">fertig</span>` : `<span class="pill warn">offen</span>`}</td>
             <td class="mono">${fmtDuration(duration(p))}</td>
             <td>${esc(personTag(a)) || "–"}</td>
-            <td class="mono">${esc(p.meta?.fivesec?.mode || "–")}</td>
+            <td class="mono">${esc(LANG_LABEL[p.meta?.survey_lang] || "–")}</td>
+            <td>${attentionPill(p)}</td>
+            <td class="mono">${esc(p.meta?.fivesec?.mode || "–")}${p.meta?.website_lang ? " · " + esc(p.meta.website_lang) : ""}</td>
             <td style="font-size:13px;color:var(--ink-2)">${esc(lastStepLabel(p))}</td>
           </tr>`;
         })
@@ -268,12 +277,11 @@
       <h1 class="headline" style="font-size:44px">${esc(personTag(a)) || "Ohne Angaben"}</h1>
       <div class="stat-line">Gestartet ${fmtDate(p.started_at)} · ${p.status === "completed" ? "abgeschlossen nach " + fmtDuration(duration(p)) : "nicht abgeschlossen"}
       ${fs ? `<br>Website-Test: ${esc(fs.mode)}, Sprache ${esc(p.meta?.website_lang || "–")}, ${fs.shown_ms} ms gezeigt, Viewport ${fs.viewport?.w}×${fs.viewport?.h}` : ""}
-      ${p.meta?.claim_order ? `<br>Claim-Reihenfolge: ${p.meta.claim_order.map((c, i) => String.fromCharCode(65 + i) + " = " + c).join(", ")}` : ""}</div>
+      <br>Umfragesprache: ${esc(LANG_LABEL[p.meta?.survey_lang] || "–")} · Aufmerksamkeitscheck: ${p.meta?.attention_ok === true ? "bestanden" : p.meta?.attention_ok === false ? "nicht bestanden" : "–"}</div>
       <dl>${fields
         .filter((f) => a[f.key])
         .map((f) => {
           let v = a[f.key].value;
-          if (f.q.type === "claimpick") v = `${v} · „${claimText(v)}“`;
           return `<dt>${f.q.ref ? esc(f.q.ref) + " · " : ""}${esc(f.label)}</dt><dd>${esc(v)}</dd>`;
         })
         .join("")}</dl>
@@ -328,15 +336,15 @@
   function exportWide() {
     const fields = answerFields();
     const byP = answersByParticipant();
-    const head = ["id", "status", "gestartet", "abgeschlossen", "dauer_min", "website_sprache", "fivesec_modus", "fivesec_ms", "viewport", "claim_reihenfolge", ...fields.map((f) => (f.q.ref ? f.q.ref + " " : "") + f.key)];
+    const head = ["id", "status", "gestartet", "abgeschlossen", "dauer_min", "umfrage_sprache", "aufmerksamkeit_ok", "website_sprache", "fivesec_modus", "fivesec_ms", "viewport", ...fields.map((f) => (f.q.ref ? f.q.ref + " " : "") + f.key)];
     const rows = visibleParticipants().map((p) => {
       const a = byP.get(p.id) || {};
       const d = duration(p);
       return [
         shortId(p.id), p.status, p.started_at, p.completed_at || "", d ? (d / 60000).toFixed(1).replace(".", ",") : "",
+        p.meta?.survey_lang || "", p.meta?.attention_ok === true ? "ja" : p.meta?.attention_ok === false ? "nein" : "",
         p.meta?.website_lang || "", p.meta?.fivesec?.mode || "", p.meta?.fivesec?.shown_ms || "",
         p.meta?.viewport ? `${p.meta.viewport.w}x${p.meta.viewport.h}` : "",
-        (p.meta?.claim_order || []).join(" | "),
         ...fields.map((f) => a[f.key]?.value ?? ""),
       ];
     });
@@ -357,7 +365,7 @@
     root.innerHTML = `
       <div class="center-screen">
         <form class="login" data-login>
-          <div class="eyebrow">${esc(cfg.study.title)}</div>
+          <div class="eyebrow">${esc(STUDY_TITLE)}</div>
           <h1>Auswertung</h1>
           <input type="email" name="email" placeholder="E-Mail" autocomplete="username" required>
           <input type="password" name="password" placeholder="Passwort" autocomplete="current-password" required
@@ -408,7 +416,7 @@
 
   function start() {
     root = document.getElementById("app");
-    document.title = "Auswertung · " + cfg.study.title;
+    document.title = "Auswertung · " + STUDY_TITLE;
     bind();
     boot();
   }

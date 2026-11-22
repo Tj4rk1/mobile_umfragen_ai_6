@@ -8,7 +8,18 @@
       ? window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey)
       : null;
 
+  // Interner Wert für „Andere“; Antworten werden immer mit deutschem Wortlaut gespeichert.
   const OTHER = "Andere";
+  const UNKNOWN = "Weiß ich nicht";
+
+  // Text in der gewünschten Sprache (Strings bleiben unverändert)
+  function L(value, lang = "de") {
+    if (value && typeof value === "object" && !Array.isArray(value)) return value[lang] ?? value.de ?? "";
+    return value ?? "";
+  }
+
+  // Kanonischer (deutscher) Wert einer Option
+  const optValue = (o) => L(o, "de");
 
   function esc(value) {
     return String(value ?? "")
@@ -27,17 +38,17 @@
     return "#" + String(id || "").replace(/-/g, "").slice(0, 5);
   }
 
-  // Alle „Antwortfelder“ in Fragebogen-Reihenfolge (Grid-Items einzeln).
+  // Alle Antwortfelder in Fragebogen-Reihenfolge (Grid-Items einzeln), Beschriftung deutsch.
   function answerFields() {
     const fields = [];
     for (const step of steps) {
       for (const q of step.questions || []) {
         if (q.type === "grid") {
           for (const item of q.items) {
-            fields.push({ key: item.key, label: `${q.label} · ${item.label}`, short: item.label, q, step, numeric: true });
+            fields.push({ key: item.key, label: `${L(q.label)} · ${L(item.label)}`, short: L(item.label), q, step, numeric: true });
           }
         } else if (q.type !== "email") {
-          fields.push({ key: q.key, label: q.label, q, step, numeric: ["scale", "percent"].includes(q.type) });
+          fields.push({ key: q.key, label: L(q.label), q, step, numeric: ["scale", "percent"].includes(q.type) });
         }
       }
     }
@@ -49,13 +60,14 @@
     return value;
   }
 
-  function claimText(id) {
-    return cfg.claims.find((c) => c.id === id)?.text || id;
+  function isVisible(q, answers) {
+    return !q.showIf || q.showIf(answers);
   }
 
   function valueFor(field, answers) {
-    const raw = answers[field.key];
     const q = field.q;
+    if (!isVisible(q, answers)) return null;
+    const raw = answers[field.key];
     if (raw === undefined || raw === null || raw === "" || (Array.isArray(raw) && !raw.length)) return null;
     switch (q.type) {
       case "multi":
@@ -64,6 +76,8 @@
         return formatChoice(raw, answers[q.key + "__andere"]);
       case "consent":
         return raw ? "ja" : null;
+      case "percent":
+        return raw === "unknown" ? UNKNOWN : String(raw);
       default:
         return String(raw);
     }
@@ -74,12 +88,13 @@
     for (const field of answerFields()) {
       const value = valueFor(field, answers);
       if (value === null) continue;
+      const num = Number(answers[field.key]);
       rows.push({
         question_key: field.key,
         construct: field.step.section,
         item_text: field.label,
         value,
-        numeric_value: field.numeric && value !== "" ? Number(answers[field.key]) : null,
+        numeric_value: field.numeric && Number.isFinite(num) ? num : null,
       });
     }
     return rows;
@@ -98,7 +113,7 @@
   }
 
   window.Common = {
-    cfg, sections, steps, db, OTHER,
-    esc, uid, shortId, answerFields, buildResponseRows, claimText, fmtDate, fmtDuration,
+    cfg, sections, steps, db, OTHER, UNKNOWN,
+    L, optValue, esc, uid, shortId, isVisible, answerFields, buildResponseRows, fmtDate, fmtDuration,
   };
 })();
