@@ -267,7 +267,7 @@
       <div class="eyebrow">Teilnehmende ${shortId(p.id)}</div>
       <h1 class="headline" style="font-size:44px">${esc(personTag(a)) || "Ohne Angaben"}</h1>
       <div class="stat-line">Gestartet ${fmtDate(p.started_at)} · ${p.status === "completed" ? "abgeschlossen nach " + fmtDuration(duration(p)) : "nicht abgeschlossen"}
-      ${fs ? `<br>Website-Test: ${esc(fs.mode)}, ${fs.shown_ms} ms gezeigt, Viewport ${fs.viewport?.w}×${fs.viewport?.h}` : ""}
+      ${fs ? `<br>Website-Test: ${esc(fs.mode)}, Sprache ${esc(p.meta?.website_lang || "–")}, ${fs.shown_ms} ms gezeigt, Viewport ${fs.viewport?.w}×${fs.viewport?.h}` : ""}
       ${p.meta?.claim_order ? `<br>Claim-Reihenfolge: ${p.meta.claim_order.map((c, i) => String.fromCharCode(65 + i) + " = " + c).join(", ")}` : ""}</div>
       <dl>${fields
         .filter((f) => a[f.key])
@@ -328,13 +328,13 @@
   function exportWide() {
     const fields = answerFields();
     const byP = answersByParticipant();
-    const head = ["id", "status", "gestartet", "abgeschlossen", "dauer_min", "fivesec_modus", "fivesec_ms", "viewport", "claim_reihenfolge", ...fields.map((f) => (f.q.ref ? f.q.ref + " " : "") + f.key)];
+    const head = ["id", "status", "gestartet", "abgeschlossen", "dauer_min", "website_sprache", "fivesec_modus", "fivesec_ms", "viewport", "claim_reihenfolge", ...fields.map((f) => (f.q.ref ? f.q.ref + " " : "") + f.key)];
     const rows = visibleParticipants().map((p) => {
       const a = byP.get(p.id) || {};
       const d = duration(p);
       return [
         shortId(p.id), p.status, p.started_at, p.completed_at || "", d ? (d / 60000).toFixed(1).replace(".", ",") : "",
-        p.meta?.fivesec?.mode || "", p.meta?.fivesec?.shown_ms || "",
+        p.meta?.website_lang || "", p.meta?.fivesec?.mode || "", p.meta?.fivesec?.shown_ms || "",
         p.meta?.viewport ? `${p.meta.viewport.w}x${p.meta.viewport.h}` : "",
         (p.meta?.claim_order || []).join(" | "),
         ...fields.map((f) => a[f.key]?.value ?? ""),

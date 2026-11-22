@@ -17,8 +17,15 @@ window.STUDY_CONFIG = {
   website: {
     // Angezeigte Adresse in der Browserleiste
     displayUrl: "kolsetu.com",
-    // Pfad auf kolsetu.com, der getestet wird ("/" = englische Startseite, "/de" = deutsche)
-    path: "/",
+    // Sprachversionen von kolsetu.com (Auswahl vor dem Website-Test, Standard: defaultLanguage)
+    languages: [
+      { code: "de", label: "Deutsch", path: "/de" },
+      { code: "en", label: "English", path: "/" },
+      { code: "fr", label: "Français", path: "/fr" },
+      { code: "es", label: "Español", path: "/es" },
+      { code: "cs", label: "Čeština", path: "/cs" },
+    ],
+    defaultLanguage: "de",
     exposureSeconds: 25,
     // In der Split-Ansicht wird die Seite in dieser Breite gerendert und verkleinert,
     // damit auch neben dem Fragen-Panel das Desktop-Layout zu sehen ist.

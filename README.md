@@ -12,7 +12,7 @@ Desktop first, mobil nutzbar. Statisches Frontend auf Vercel, Daten in Supabase 
 ## Dateien
 
 - `app/questions.js`: Fragebogen. `ref` = Fragennummer im Leitfaden (F1–F21). Pflichtfragen laut Leitfaden: F3, F6, F7, F9, F11, F14, F19, F20.
-- `app/config.js`: Supabase-Keys, Website-Pfad (`/` = EN, `/de` = DE), Testdauer, Claims, LinkedIn-Beispielnachricht.
+- `app/config.js`: Supabase-Keys, Sprachversionen der Website (Standard Deutsch), Testdauer, Claims, LinkedIn-Beispielnachricht.
 - `app/survey.js`: Ablauf, Website-Test (Briefing → Countdown → 25 s → automatisch ausblenden), Split-View.
 - `app/admin.js`: Kennzahlen, Antworten je Frage, Teilnehmende, Kontakte, CSV-Export (Excel-kompatibel, `;`).
 - `api/site.js` + `vercel.json`: Website-Proxy (siehe unten).

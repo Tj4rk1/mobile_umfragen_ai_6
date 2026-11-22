@@ -24,6 +24,7 @@
       answers: {},
       claimOrder: shuffle(cfg.claims.map((c) => c.id)),
       fivesecDone: false,
+      siteLang: cfg.website.defaultLanguage,
       startedAt: null,
       completed: false,
       meta: { step_seconds: {} },
@@ -72,7 +73,8 @@
       ...state.meta,
       viewport: { w: window.innerWidth, h: window.innerHeight, dpr: window.devicePixelRatio || 1 },
       website_mode: websiteMode,
-      website_path: W.path,
+      website_lang: siteLang().code,
+      website_path: siteLang().path,
       claim_order: state.claimOrder,
       last_step: step().id,
       language: navigator.language,
@@ -122,9 +124,47 @@
   }
 
   // ── Website mode / proxy check ─────────────────────────────
+  function siteLang() {
+    return W.languages.find((l) => l.code === state.siteLang) || W.languages.find((l) => l.code === W.defaultLanguage) || W.languages[0];
+  }
+
   function siteSrc() {
-    const path = W.path.startsWith("/") ? W.path : "/" + W.path;
+    const path = siteLang().path;
     return path + (path.includes("?") ? "&" : "?") + "studie-website=1";
+  }
+
+  function siteUrlLabel() {
+    const path = siteLang().path;
+    return W.displayUrl + (path === "/" ? "" : path);
+  }
+
+  // Runde Flaggen (wie im Sprachmenü auf kolsetu.com)
+  const FLAGS = {
+    de: '<rect width="30" height="7" fill="#000"/><rect y="7" width="30" height="7" fill="#DD0000"/><rect y="14" width="30" height="6" fill="#FFCE00"/>',
+    fr: '<rect width="10" height="20" fill="#0055A4"/><rect x="10" width="10" height="20" fill="#fff"/><rect x="20" width="10" height="20" fill="#EF4135"/>',
+    es: '<rect width="30" height="20" fill="#AA151B"/><rect y="5" width="30" height="10" fill="#F1BF00"/>',
+    cs: '<rect width="30" height="10" fill="#fff"/><rect y="10" width="30" height="10" fill="#D7141A"/><path d="M0 0 L15 10 L0 20 Z" fill="#11457E"/>',
+    en: '<rect width="30" height="20" fill="#012169"/><path d="M0 0L30 20M30 0L0 20" stroke="#fff" stroke-width="4"/><path d="M0 0L30 20M30 0L0 20" stroke="#C8102E" stroke-width="1.6"/><path d="M15 0V20M0 10H30" stroke="#fff" stroke-width="6"/><path d="M15 0V20M0 10H30" stroke="#C8102E" stroke-width="3.4"/>',
+  };
+  function flag(code) {
+    return `<span class="flag" aria-hidden="true"><svg viewBox="5 0 20 20" preserveAspectRatio="xMidYMid slice">${FLAGS[code] || ""}</svg></span>`;
+  }
+
+  function langPickerHtml() {
+    const cur = siteLang();
+    return `<div class="lang">
+      <span class="lang-label" id="lang-lbl">Sprache der Website</span>
+      <div class="lang-dd">
+        <button type="button" class="lang-btn" data-act="lang-toggle" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="lang-lbl">
+          ${flag(cur.code)}<span>${esc(cur.label)}</span><svg class="chev" viewBox="0 0 12 12" width="12" height="12"><path d="M3 4.5L6 7.5L9 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <ul class="lang-menu" role="listbox" hidden>
+          ${W.languages
+            .map((l) => `<li><button type="button" role="option" data-lang="${l.code}" aria-selected="${l.code === cur.code}">${flag(l.code)}<span>${esc(l.label)}</span>${l.code === cur.code ? '<span class="tick">✓</span>' : ""}</button></li>`)
+            .join("")}
+        </ul>
+      </div>
+    </div>`;
   }
 
   async function detectWebsiteMode() {
@@ -186,6 +226,51 @@
     fitObserver = new ResizeObserver(fitSite);
     fitObserver.observe(vp);
     fitSite();
+  }
+
+  // Verstellbare Trennlinie zwischen Website und Fragen
+  const PANEL_KEY = cfg.storageKey + "-panel-width";
+  const PANEL_DEFAULT = 460;
+  function clampPanel(px, split) {
+    const max = Math.max(320, split.clientWidth - 420);
+    return Math.round(Math.min(max, Math.max(320, px)));
+  }
+  function setPanelWidth(px, persistIt = true) {
+    const split = document.querySelector(".split");
+    if (!split) return;
+    const w = clampPanel(px, split);
+    split.style.setProperty("--panel", w + "px");
+    if (persistIt) try { localStorage.setItem(PANEL_KEY, String(w)); } catch (e) {}
+    fitSite();
+  }
+  function setupGutter() {
+    const split = document.querySelector(".split");
+    const gutter = split?.querySelector(".gutter");
+    if (!gutter) return;
+    const saved = Number(localStorage.getItem(PANEL_KEY));
+    if (saved) setPanelWidth(saved, false);
+    gutter.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      gutter.setPointerCapture(e.pointerId);
+      split.classList.add("dragging");
+      const move = (ev) => setPanelWidth(split.getBoundingClientRect().right - ev.clientX - 6);
+      const up = () => {
+        split.classList.remove("dragging");
+        gutter.removeEventListener("pointermove", move);
+        gutter.removeEventListener("pointerup", up);
+        gutter.removeEventListener("pointercancel", up);
+      };
+      gutter.addEventListener("pointermove", move);
+      gutter.addEventListener("pointerup", up);
+      gutter.addEventListener("pointercancel", up);
+    });
+    gutter.addEventListener("dblclick", () => setPanelWidth(PANEL_DEFAULT));
+    gutter.addEventListener("keydown", (e) => {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      e.preventDefault();
+      const cur = split.querySelector(".panel").getBoundingClientRect().width;
+      setPanelWidth(cur + (e.key === "ArrowLeft" ? 32 : -32));
+    });
   }
 
   // ── Validation ─────────────────────────────────────────────
@@ -276,7 +361,7 @@
     const idx = sections.indexOf(sec);
     return `
       <header class="sheader">
-        <div class="sh-brand"><span class="orb"></span><span class="sh-title">${esc(cfg.study.title)}</span></div>
+        <div class="sh-brand"><span class="sh-title">${esc(cfg.study.title)}</span></div>
         <div class="sh-progress" aria-label="Fortschritt ${progress()} Prozent">
           <span class="sh-sec">${idx > 0 ? `<span class="sh-n">${idx}/${sections.length - 1}</span>` : ""}${esc(sec.title)}</span>
           <div class="meter"><i style="width:${progress()}%"></i></div>
@@ -455,6 +540,7 @@
       <div class="eyebrow">Website-Test · Teil 1</div>
       <h1 class="headline">${esc(s.title)}</h1>
       <p class="lead">${esc(s.lead)}</p>
+      ${langPickerHtml()}
       <ol class="brief">${s.instructions.map(([t, d]) => `<li><div><strong>${esc(t)}</strong><span>${esc(d)}</span></div></li>`).join("")}</ol>
       <div class="fivesec-cta">
         <button class="btn lg" data-act="fivesec" type="button" ${websiteMode === "checking" ? "disabled" : ""}>Ich bin bereit <span class="arr">→</span></button>
@@ -492,18 +578,20 @@
             <section class="browser" aria-label="Website">
               <div class="chrome">
                 <span class="lights"><i></i><i></i><i></i></span>
-                <span class="url">${esc(W.displayUrl)}</span>
+                <span class="url">${flag(siteLang().code)}${esc(siteUrlLabel())}</span>
                 <span class="tag ${websiteMode === "live" ? "live" : ""}">${websiteMode === "live" ? "● live" : "Screenshot"}</span>
                 <button class="tool" type="button" data-act="reload-site" title="Seite neu laden">↻</button>
                 <button class="tool mobile-full" type="button" data-act="toggle-full">⤢</button>
               </div>
               <div class="viewport">${siteMarkup("site")}</div>
             </section>
+            <div class="gutter" role="separator" aria-orientation="vertical" aria-label="Breite anpassen" tabindex="0" title="Ziehen, um die Breite zu ändern · Doppelklick: zurücksetzen"><span></span></div>
             <aside class="panel">${panel}</aside>
           </div>
         </main>
       </div>`;
     window.scrollTo(0, 0);
+    setupGutter();
     watchFit();
   }
 
@@ -607,6 +695,7 @@
           state.fivesecDone = true;
           state.meta.fivesec = {
             mode: websiteMode,
+            lang: siteLang().code,
             loaded_before_show: loaded,
             wait_after_countdown_ms: Math.max(0, Math.round((loadedAt || performance.now()) - t0 - W.countdownSeconds * 1000)),
             shown_ms: shownMs,
@@ -638,6 +727,22 @@
       if (t.dataset.act === "next") return next();
       if (t.dataset.act === "back") return back();
       if (t.dataset.act === "fivesec") return startFivesec();
+      if (t.dataset.act === "lang-toggle") {
+        const menu = t.parentElement.querySelector(".lang-menu");
+        const open = menu.hidden;
+        menu.hidden = !open;
+        t.setAttribute("aria-expanded", String(open));
+        if (open) menu.querySelector('[aria-selected="true"]')?.focus();
+        return;
+      }
+      if (t.dataset.lang) {
+        state.siteLang = t.dataset.lang;
+        persist();
+        const picker = t.closest(".lang");
+        picker.outerHTML = langPickerHtml();
+        root.querySelector(".lang-btn")?.focus();
+        return;
+      }
       if (t.dataset.act === "reload-site") {
         const f = document.getElementById("site");
         if (f?.tagName === "IFRAME") f.src = siteSrc();
@@ -731,6 +836,16 @@
       if (s.kind === "fivesec" || s.kind === "end" || document.querySelector(".fs")) return;
       e.preventDefault();
       next();
+    });
+
+    document.addEventListener("click", (e) => {
+      if (e.target.closest(".lang-dd")) return;
+      document.querySelectorAll(".lang-menu").forEach((m) => { m.hidden = true; });
+      document.querySelectorAll(".lang-btn").forEach((b) => b.setAttribute("aria-expanded", "false"));
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      document.querySelectorAll(".lang-menu").forEach((m) => { m.hidden = true; });
     });
 
     window.addEventListener("pagehide", () => {
