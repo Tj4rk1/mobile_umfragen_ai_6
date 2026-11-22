@@ -1,16 +1,17 @@
 {
+  "cleanUrls": false,
   "rewrites": [
+    { "source": "/", "has": [{ "type": "query", "key": "studie-website" }], "destination": "/api/site?__p=/" },
+    { "source": "/", "has": [{ "type": "header", "key": "sec-fetch-dest", "value": "iframe" }], "destination": "/api/site?__p=/" },
+    { "source": "/", "has": [{ "type": "header", "key": "rsc" }], "destination": "/api/site?__p=/" },
+    { "source": "/", "destination": "/app/index.html" },
+    { "source": "/admin", "destination": "/app/index.html" },
+    { "source": "/:path((?!app/|archive/|api/).*)", "destination": "/api/site?__p=/:path" }
+  ],
+  "headers": [
     {
-      "source": "/",
-      "destination": "/finale_survey_app.html"
-    },
-    {
-      "source": "/admin",
-      "destination": "/finale_survey_app.html"
-    },
-    {
-      "source": "/survey",
-      "destination": "/finale_survey_app.html"
+      "source": "/app/(.*)",
+      "headers": [{ "key": "x-robots-tag", "value": "noindex, nofollow" }]
     }
   ]
 }
