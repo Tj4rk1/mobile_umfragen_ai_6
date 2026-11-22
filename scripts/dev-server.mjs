@@ -28,6 +28,7 @@ function routeFor(req, url) {
   }
   if (p === "/admin") return { file: "app/index.html" };
   if (p.startsWith("/app/") || p.startsWith("/archive/")) return { file: p.slice(1) };
+  if (p === "/api/site") return { proxy: url.searchParams.get("__p") || "/" };
   return { proxy: p };
 }
 
