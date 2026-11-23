@@ -599,6 +599,7 @@
     entry.timer = setInterval(() => { if (entry.state === "recording") micUi(key); }, 500);
     try {
     entry.session = window.Voice.start({
+      lang: lang(),
       baseText: field.value,
       onText: (text) => {
         const el = micField(key);

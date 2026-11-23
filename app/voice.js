@@ -13,6 +13,9 @@
   const ATTEMPT_DELAYS = [0, 0, 1500, 3000, 5000, 8000, 12000];
   const AVOID_MS = 60000; // nach einer Ablehnung den Anbieter 60 s lang zuerst überspringen
   const ELEVEN_RATES = [8000, 16000, 22050, 24000, 44100, 48000];
+  const KEYTERMS = ["Kolsetu", "Elba", "KI", "Kundenservice", "digitale Mitarbeiter"];
+  const LEAD_IN_MS = 300; // kurze Stille vor der Aufnahme, damit das erste Wort nicht am Rand klebt
+  const MIC_KEEP_MS = 60000; // Mikrofon nach der letzten Aufnahme 60 s bereithalten (kein Anlauf beim nächsten Feld)
   const CONNECT_TIMEOUT_MS = 4000; // kommt bis dahin keine Bestätigung vom Anbieter → nächster Anbieter
   const DEBUG = /[?&]debug=1/.test(location.search);
   const T0 = performance.now();
@@ -44,7 +47,7 @@
   const PROVIDERS = {
     eleven: {
       ok: (rate) => ELEVEN_RATES.includes(rate),
-      url: (token, rate) => "wss://api.elevenlabs.io/v1/speech-to-text/realtime?" + new URLSearchParams({ token, model_id: "scribe_v3_live", audio_format: "pcm_" + rate, commit_strategy: "vad" }),
+      url: (token, rate, langs) => "wss://api.elevenlabs.io/v1/speech-to-text/realtime?" + new URLSearchParams({ token, model_id: "scribe_v3_live", audio_format: "pcm_" + rate, commit_strategy: "vad", language_code: langs[0], secondary_languages: JSON.stringify(langs.slice(1)), keyterms: JSON.stringify(KEYTERMS) }),
       binary: false,
       send: (ws, pcm, rate, commit) => ws.send(JSON.stringify({ message_type: "input_audio_chunk", audio_base_64: b64(pcm), commit: !!commit, sample_rate: rate })),
       // liefert "begin" | "text" | "fail" | null
@@ -69,7 +72,7 @@
     },
     assembly: {
       ok: (rate) => rate >= 8000 && rate <= 96000,
-      url: (token, rate) => "wss://streaming.eu.assemblyai.com/v3/ws?" + new URLSearchParams({ token, sample_rate: String(rate), encoding: "pcm_s16le", speech_model: "universal-3-6-pro" }),
+      url: (token, rate, langs) => "wss://streaming.eu.assemblyai.com/v3/ws?" + new URLSearchParams({ token, sample_rate: String(rate), encoding: "pcm_s16le", speech_model: "universal-3-6-pro", language_codes: JSON.stringify(langs), keyterms_prompt: JSON.stringify(KEYTERMS) }),
       binary: true,
       send: (ws, pcm) => ws.send(pcm),
       handle(s, m) {
@@ -123,6 +126,25 @@
     registerProcessor("pcm16", Pcm16);`;
 
   let workletUrl = null;
+  let sharedStream = null;
+  let releaseTimer = null;
+  async function getStream() {
+    clearTimeout(releaseTimer);
+    if (sharedStream && sharedStream.getAudioTracks().some((t) => t.readyState === "live")) return sharedStream;
+    sharedStream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+    log("Mikrofon geöffnet", sharedStream.getAudioTracks()[0]?.label || "");
+    return sharedStream;
+  }
+  function scheduleRelease() {
+    clearTimeout(releaseTimer);
+    releaseTimer = setTimeout(() => {
+      if (sessions.size || !sharedStream) return;
+      sharedStream.getTracks().forEach((t) => t.stop());
+      sharedStream = null;
+      log("Mikrofon freigegeben");
+    }, MIC_KEEP_MS);
+  }
+  window.addEventListener("pagehide", () => { try { sharedStream && sharedStream.getTracks().forEach((t) => t.stop()); } catch (e) {} });
   let sharedCtx = null;
   let workletReady = null;
   function getCtx() {
@@ -153,7 +175,7 @@
 
   // callbacks: onText(fullText), onState(state, errCode), onLevel(0..1)
   // states: "starting" → "recording" → "finishing" → "idle" | "error"
-  function start({ baseText, onText, onState, onLevel, onConn }) {
+  function start({ baseText, onText, onState, onLevel, onConn, lang }) {
     if (current) finish(current); // alte Aufnahme im Hintergrund abschließen, nicht darauf warten
 
     const ctx = getCtx(); // synchron im Klick (Autoplay-Regeln), wird für alle Aufnahmen wiederverwendet
@@ -163,6 +185,7 @@
       base: baseText && baseText.trim() ? baseText.replace(/\s+$/, "") + " " : "",
       turns: new Map(), el: { committed: [], partial: "" }, queue: [], ws: null, stream: null, nodes: [], provider: null,
       state: "starting", done: false,
+      langs: lang === "en" ? ["en", "de"] : ["de", "en"], // nur Deutsch und Englisch, Umfragesprache zuerst
     };
     sessions.add(s);
     current = s;
@@ -183,7 +206,7 @@
 
     // 1) Mikrofon öffnen und SOFORT aufnehmen (Puffer), damit kein Wort verloren geht
     try {
-      s.stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+      s.stream = await getStream();
     } catch (err) {
       const n = err && err.name;
       log("Mikrofon-Fehler:", n || String(err));
@@ -218,7 +241,7 @@
       return next(s, attempt, "token", name);
     }
     if (s.cleaned) return;
-    const ws = new WebSocket(P.url(token, s.ctx.sampleRate));
+    const ws = new WebSocket(P.url(token, s.ctx.sampleRate, s.langs));
     if (P.binary) ws.binaryType = "arraybuffer";
     s.ws = ws;
     s.provider = name;
@@ -308,6 +331,7 @@
       node = ctx.createScriptProcessor(4096, 1, 1);
       node.onaudioprocess = (e) => onChunk(toInt16(e.inputBuffer.getChannelData(0)));
     }
+    s.queue.push(new Int16Array(Math.round((ctx.sampleRate * LEAD_IN_MS) / 1000)).buffer);
     src.connect(node);
     node.connect(mute);
     s.nodes = [src, node, mute];
@@ -326,14 +350,14 @@
     if (current === s) current = null;
     s.onLevel(0);
     if (!s.cleaned) setState(s, "finishing");
-    // noch ~200 ms weiter aufnehmen, damit das letzte Wort nicht abgeschnitten wird
+    // noch ~350 ms weiter aufnehmen, damit das letzte Wort nicht abgeschnitten wird
     setTimeout(() => {
       s.flushed = true;
       stopMic(s);
       if (s.cleaned) return;
       if (s.live && s.ws && s.ws.readyState === 1) endStream(s); // sonst erledigt das der Begin-Handler nach dem Nachsenden
       setTimeout(() => cleanup(s), 45000); // Sicherheitsnetz (inkl. Wiederholungen)
-    }, 200);
+    }, 350);
   }
 
   function endStream(s) {
@@ -345,7 +369,7 @@
   function stopMic(s) {
     for (const n of s.nodes) { try { n.disconnect(); } catch (e) {} }
     s.nodes = [];
-    try { s.stream && s.stream.getTracks().forEach((t) => t.stop()); } catch (e) {}
+    s.stream = null; // Stream bleibt kurz offen (getStream/scheduleRelease)
   }
 
   function fail(s, code) {
@@ -365,6 +389,7 @@
     try { s.ws && s.ws.readyState <= 1 && s.ws.close(); } catch (e) {}
     log("Aufnahme beendet", s.provider || "-", keepState ? "(Fehler)" : "");
     sessions.delete(s);
+    if (!sessions.size) scheduleRelease();
     s.onLevel(0);
     if (!keepState) setState(s, "idle");
   }

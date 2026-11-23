@@ -49,3 +49,6 @@ Teil des Uni-Projekts „Interdisziplinäres Projekt“ (Kolsetu / Elba, Markenw
 - Ein Klick auf das Mikrofon reicht, das Textfeld muss vorher nicht angeklickt werden.
 - Ein gemeinsamer `AudioContext` für alle Aufnahmen (`getCtx()` in `voice.js`), nicht pro Aufnahme neu anlegen: Browser begrenzen die Anzahl, danach scheitert der Start stumm.
 - Diagnose für Nutzer: `/?preview=1&debug=1` blendet unten links ein Log-Panel mit allen `[Spracheingabe]`-Schritten ein.
+- Sprache: nur DE/EN. Umfragesprache zuerst (`lang` an `Voice.start`): AssemblyAI `language_codes=["de","en"]` (nur als JSON-Liste gültig), ElevenLabs `language_code` + `secondary_languages`. Dazu Fachbegriffe (`KEYTERMS`: Kolsetu, Elba …).
+- Erste Wörter: Mikrofon-Stream bleibt nach der letzten Aufnahme 60 s offen (`MIC_KEEP_MS`, kein Hardware-Anlauf beim nächsten Feld), 300 ms Stille als Vorlauf (`LEAD_IN_MS`), nach Stopp 350 ms Nachlauf.
+- Testen mit Puppeteer: ein dauerhafter Fake-Mikrofon-Stream (`MediaStreamDestination`), Testsätze werden erst beim Klick eingespielt (sonst passt es nicht mehr zum geteilten Stream).
