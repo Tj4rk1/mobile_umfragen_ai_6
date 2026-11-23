@@ -351,11 +351,38 @@
           placeholder: T("Was fällt Ihnen auf, was gefällt Ihnen, was irritiert Sie?", "What stands out, what do you like, what confuses you?"),
         },
         {
+          key: "hauptbotschaft_verstaendlich",
+          ref: "F12",
+          type: "scale",
+          showClaim: true,
+          label: T("Wie verständlich ist die Hauptbotschaft der Seite?", "How understandable is the page's main message?"),
+          scale: { min: 1, max: 10, left: T("gar nicht verständlich", "not understandable at all"), right: T("sehr verständlich", "very understandable") },
+        },
+        {
           key: "verstaendnis",
           ref: "F7",
           type: "scale",
           label: T("Ich verstehe direkt, was das Produkt macht.", "I immediately understand what the product does."),
           scale: AGREE,
+        },
+        {
+          key: "aufmachung",
+          ref: "F12",
+          type: "grid",
+          label: T("Wie empfinden Sie die Website insgesamt?", "How do you perceive the website overall?"),
+          scale: { min: 1, max: 5, left: T("nicht ansprechend", "not appealing"), right: T("ansprechend", "appealing") },
+          items: [
+            { key: "aufmachung_design", label: T("Design", "Design") },
+            { key: "aufmachung_texte", label: T("Texte", "Copy") },
+          ],
+        },
+        {
+          key: "naechster_schritt",
+          ref: "F13",
+          type: "single",
+          label: T("Wäre klar, was Sie als Nächstes tun würden, wenn Sie Interesse hätten?", "Would it be clear what to do next if you were interested?"),
+          options: [T("Ja", "Yes"), T("Unsicher", "Unsure"), T("Nein", "No")],
+          columns: 3,
         },
       ],
     },
@@ -426,42 +453,6 @@
         },
       ],
     },
-    {
-      id: "w6",
-      section: "website",
-      layout: "website",
-      title: T("Gesamteindruck der Website", "Overall impression of the website"),
-      questions: [
-        {
-          key: "aufmachung",
-          ref: "F12",
-          type: "grid",
-          label: T("Wie empfinden Sie die Website insgesamt?", "How do you perceive the website overall?"),
-          scale: { min: 1, max: 5, left: T("nicht ansprechend", "not appealing"), right: T("ansprechend", "appealing") },
-          items: [
-            { key: "aufmachung_design", label: T("Design", "Design") },
-            { key: "aufmachung_texte", label: T("Texte", "Copy") },
-          ],
-        },
-        {
-          key: "hauptbotschaft_verstaendlich",
-          ref: "F12",
-          type: "scale",
-          showClaim: true,
-          label: T("Wie verständlich ist die Hauptbotschaft der Seite?", "How understandable is the page's main message?"),
-          scale: { min: 1, max: 10, left: T("gar nicht verständlich", "not understandable at all"), right: T("sehr verständlich", "very understandable") },
-        },
-        {
-          key: "naechster_schritt",
-          ref: "F13",
-          type: "single",
-          label: T("Wäre klar, was Sie als Nächstes tun würden, wenn Sie Interesse hätten?", "Would it be clear what to do next if you were interested?"),
-          options: [T("Ja", "Yes"), T("Unsicher", "Unsure"), T("Nein", "No")],
-          columns: 3,
-        },
-      ],
-    },
-
     // ── 3. Vertrauen ────────────────────────────────────────────
     {
       id: "v1",
