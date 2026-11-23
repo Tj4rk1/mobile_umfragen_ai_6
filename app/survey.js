@@ -681,9 +681,9 @@
       <h1 class="headline">${esc(t(s.title))}</h1>
       <p class="lead">${esc(t(s.lead))}</p>
       <div class="facts">${s.facts.map(([ti, d]) => `<div class="fact"><strong>${esc(t(ti))}</strong><span>${esc(t(d))}</span></div>`).join("")}</div>
-      ${s.voice ? `<div class="privacy voice-box"><div class="voice-ic">${MIC_SVG}</div><div><strong>${esc(t(s.voice.title))}</strong><p>${esc(t(s.voice.text))}</p>
-        <p class="voice-links">${s.voice.links.map(([l, href]) => `<a href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(t(l))} ↗</a>`).join("")}</p></div></div>` : ""}
-      ${s.privacy ? `<div class="privacy"><strong>${esc(t(s.privacy.title))}</strong><p>${esc(t(s.privacy.text))}</p></div>` : ""}
+      ${s.voice ? `<div class="privacy voice-box"><div class="voice-ic">${MIC_SVG}</div><div><strong>${esc(t(s.voice.title))}</strong><p>${esc(t(s.voice.text))}</p></div></div>` : ""}
+      ${s.privacy ? `<div class="privacy"><strong>${esc(t(s.privacy.title))}</strong><p>${esc(t(s.privacy.text))}</p>${s.privacy.voice ? `<div class="privacy-sub"><strong>${esc(t(s.privacy.voice.title))}</strong><p>${esc(t(s.privacy.voice.text))}</p>
+        <p class="voice-links">${s.privacy.voice.links.map(([l, href]) => `<a href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(t(l))} ↗</a>`).join("")}</p></div>` : ""}</div>` : ""}
       ${questionsHtml(s)}
       ${!db && !PREVIEW ? `<div class="notice">${esc(u().dbDown)}</div>` : ""}`;
   }

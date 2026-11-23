@@ -64,6 +64,17 @@
       ],
       privacy: {
         title: T("Datenschutz", "Privacy"),
+        voice: {
+          title: T("Spracheingabe", "Voice input"),
+          text: T(
+            "Wenn Sie das Mikrofon nutzen, wird Ihre Sprache live über den Dienst AssemblyAI (Server in der EU) in Text umgewandelt. Die Aufnahme selbst wird nicht gespeichert, nur der Text landet in Ihrer Antwort, und Sie können ihn vor dem Weiterklicken jederzeit korrigieren.",
+            "If you use the microphone, your speech is converted to text live by the service AssemblyAI (servers in the EU). The recording itself is not stored; only the text ends up in your answer, and you can edit it at any time before moving on."
+          ),
+          links: [
+            [T("Datenschutzerklärung von AssemblyAI", "AssemblyAI privacy policy"), "https://www.assemblyai.com/legal/privacy-policy"],
+            [T("Nutzungsbedingungen", "Terms of service"), "https://www.assemblyai.com/legal/terms-of-service"],
+          ],
+        },
         text: T(
           "Die Umfrage ist anonym. Wir speichern keine personenbezogenen Daten wie Ihren Namen oder Ihre E-Mail-Adresse, sondern nur Ihre Antworten. Die einzige Ausnahme: Am Ende können Sie freiwillig eine E-Mail-Adresse angeben, damit wir Ihnen Rückfragen zu Ihren Antworten stellen können. Nur dann, und nur wenn Sie sie dort ausdrücklich eintragen, ist Ihre E-Mail-Adresse mit Ihren Antworten verknüpft. Bitte nennen Sie in Freitext-Antworten keine Namen von Personen.",
           "This survey is anonymous. We don't store any personal data such as your name or email address, only your answers. The only exception: at the end you can voluntarily leave an email address so we can ask follow-up questions about your answers. Only then, and only if you explicitly enter it there, is your email address linked to your answers. Please don't mention names of people in your free-text answers."
@@ -72,13 +83,9 @@
       voice: {
         title: T("Gerne frei heraus erzählen", "Feel free to just talk"),
         text: T(
-          "Am meisten helfen uns freie, ungefilterte Antworten. Deshalb können Sie jede Freitext-Antwort auch einsprechen, per Mikrofon im Antwortfeld. Die Sprache wird live über AssemblyAI (Server in der EU) in Text umgewandelt, die Aufnahme wird nicht gespeichert. Freiwillig, Tippen geht genauso.",
-          "Open, unfiltered answers help us most. That's why you can also dictate any free-text answer using the microphone in the answer field. Your speech is converted to text live by AssemblyAI (servers in the EU); the recording is not stored. Optional, typing works just as well."
+          "Am meisten helfen uns freie, ungefilterte Antworten. Deshalb können Sie jede Freitext-Antwort auch einsprechen: einfach auf das Mikrofon im Antwortfeld klicken. Freiwillig, Tippen geht genauso.",
+          "Open, unfiltered answers help us most. That's why you can also dictate any free-text answer: just click the microphone in the answer field. Optional, typing works just as well."
         ),
-        links: [
-          [T("Datenschutzerklärung von AssemblyAI", "AssemblyAI privacy policy"), "https://www.assemblyai.com/legal/privacy-policy"],
-          [T("Nutzungsbedingungen", "Terms of service"), "https://www.assemblyai.com/legal/terms-of-service"],
-        ],
       },
       questions: [
         {

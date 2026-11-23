@@ -452,6 +452,7 @@ table.pt tr.click:hover td { background: var(--bg); }
   .admin-table-wrap { overflow-x: auto; }
 }
 .privacy + .questions { margin-top: 16px; }
+.privacy-sub { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
 .voice-box { display: flex; gap: 14px; align-items: flex-start; }
 .voice-ic { flex: none; width: 36px; height: 36px; border-radius: 999px; display: grid; place-items: center; background: var(--soft); border: 1px solid var(--line); color: var(--ink); }
 .voice-links { margin-top: 8px !important; display: flex; flex-wrap: wrap; gap: 6px 18px; }
