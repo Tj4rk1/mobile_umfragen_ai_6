@@ -300,12 +300,6 @@
           label: T("Was macht Elba konkret? Beschreiben Sie es in einem Satz.", "What exactly does Elba do? Describe it in one sentence."),
         },
         {
-          key: "elba_aufgaben",
-          type: "text",
-          rows: 2,
-          label: T("Welche Aufgaben könnte Elba in Ihrem Service übernehmen?", "Which tasks could Elba take over in your service?"),
-        },
-        {
           key: "markenklarheit",
           ref: "F9",
           type: "single",
@@ -320,6 +314,12 @@
           label: T("Wäre Ihnen klar, ob sich das Produkt in Ihre Systeme integrieren lässt?", "Would it be clear whether the product integrates with your systems?"),
           options: [T("Ja", "Yes"), T("Eher ja", "Rather yes"), T("Eher nein", "Rather no"), T("Nein", "No")],
           columns: 4,
+        },
+        {
+          key: "elba_aufgaben",
+          type: "text",
+          rows: 2,
+          label: T("Welche Aufgaben könnte Elba in Ihrem Service übernehmen?", "Which tasks could Elba take over in your service?"),
         },
         {
           key: "fivesec_erinnerung",
