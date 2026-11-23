@@ -39,3 +39,6 @@ Teil des Uni-Projekts „Interdisziplinäres Projekt“ (Kolsetu / Elba, Markenw
 - Mic-Button in jedem Textfeld (`case "text"`) und in „Andere, und zwar …“ (`optionButtons`) über `micHtml`; nicht im E-Mail-Feld; Aufnahme stoppt automatisch beim Seitenwechsel (`render`).
 - Lokal testen: `ASSEMBLYAI_API_KEY=… node --experimental-detect-module scripts/dev-server.mjs`.
 - Datenschutzhinweis im Intro erwähnt AssemblyAI; bei Anbieterwechsel anpassen.
+- Audio wird ab dem Klick sofort aufgenommen und gepuffert, bis der Server bereit ist (kein Verlust der ersten Wörter). Jede Aufnahme ist eine eigene Session; Feldwechsel startet sofort, die alte schließt im Hintergrund ab. „Weiter“/„Zurück“ warten, bis der letzte Satz da ist (`finishMics`).
+- AssemblyAI-Limit: Free-Account = 5 neue Streaming-Sessions pro Minute (Fehler 1008 „Too many concurrent sessions“). `voice.js` wiederholt dann automatisch mit Backoff und puffert bis ~60 s Audio. Für echte Erhebungen den Account upgraden (100–200/Minute).
+- Browser-Test ohne echtes Mikrofon: Puppeteer mit überschriebenem `getUserMedia`, das eine WAV-Datei (`say` + `afconvert`) als Stream liefert. Der Fake-Device-Modus von Chrome headless liefert nur Stille.

@@ -26,8 +26,8 @@
       previewEnd: "Vorschau: Es wurde nichts gespeichert.", restart: "Neu starten",
       endErr: "Ihre letzten Antworten konnten nicht übertragen werden. Bitte prüfen Sie Ihre Verbindung.", retry: "Erneut senden", sent: "Übertragen. Danke!",
       newline: "Shift + Enter: neue Zeile", progress: (p) => `Fortschritt ${p} Prozent`,
-      mic: "Antwort einsprechen", micStop: "Aufnahme beenden", micConnecting: "Mikrofon wird verbunden …", micRec: "Hört zu … zum Beenden nochmal klicken",
-      micErr: { denied: "Kein Zugriff auf das Mikrofon. Bitte im Browser erlauben.", other: "Spracheingabe gerade nicht verfügbar. Bitte tippen Sie Ihre Antwort." },
+      mic: "Antwort einsprechen", micStop: "Aufnahme beenden", micConnecting: "Mikrofon wird gestartet …", micRec: "Sprechen Sie einfach los. Zum Beenden aufs Mikrofon klicken.", micFinishing: "Text wird fertiggestellt …",
+      micErr: { denied: "Kein Zugriff auf das Mikrofon. Bitte im Browser erlauben (Schloss-Symbol in der Adresszeile).", nomic: "Kein Mikrofon gefunden.", busy: "Die Spracheingabe ist gerade ausgelastet. Bitte in einer Minute erneut versuchen oder tippen.", other: "Spracheingabe gerade nicht verfügbar. Bitte tippen Sie Ihre Antwort." },
     },
     en: {
       next: "Next", back: "Back", submit: "Submit", start: "Let’s start",
@@ -46,8 +46,8 @@
       previewEnd: "Preview: nothing was saved.", restart: "Start over",
       endErr: "Your latest answers couldn't be sent. Please check your connection.", retry: "Send again", sent: "Sent. Thank you!",
       newline: "Shift + Enter: new line", progress: (p) => `Progress ${p} percent`,
-      mic: "Dictate your answer", micStop: "Stop recording", micConnecting: "Connecting microphone …", micRec: "Listening … click again to stop",
-      micErr: { denied: "No access to the microphone. Please allow it in your browser.", other: "Voice input isn't available right now. Please type your answer." },
+      mic: "Dictate your answer", micStop: "Stop recording", micConnecting: "Starting microphone …", micRec: "Just start talking. Click the microphone to stop.", micFinishing: "Finishing text …",
+      micErr: { denied: "No access to the microphone. Please allow it in your browser (lock icon in the address bar).", nomic: "No microphone found.", busy: "Voice input is busy right now. Please try again in a minute or type.", other: "Voice input isn't available right now. Please type your answer." },
     },
   };
   const SURVEY_LANGS = [
@@ -375,6 +375,7 @@
 
   async function next() {
     if (document.querySelector(".fs")) return;
+    await finishMics();
     const s = step();
     if (s.kind === "language" && !state.lang) return;
     if (s.kind === "fivesec" || s.kind === "end") return;
@@ -409,7 +410,8 @@
     if (state.stepIndex > 1) saveProgress(false);
   }
 
-  function back() {
+  async function back() {
+    await finishMics();
     trackStepTime();
     let target = state.stepIndex - 1;
     if (steps[target]?.kind === "fivesec" && state.fivesecDone) target--;
@@ -539,11 +541,11 @@
 
   // ── Spracheingabe (app/voice.js) ───────────────────────────
   const MIC_SVG = `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>`;
-  let micKey = null;
+  const micSessions = {}; // key → { session, state, startedAt, timer }
 
   function micHtml(key) {
     if (!window.Voice || !window.Voice.supported()) return "";
-    return `<button type="button" class="mic" data-mic="${key}" aria-pressed="false" aria-label="${esc(u().mic)}" title="${esc(u().mic)}">${MIC_SVG}</button><div class="mic-status" data-mic-status="${key}" aria-live="polite"></div>`;
+    return `<button type="button" class="mic" data-mic="${key}" aria-pressed="false" aria-label="${esc(u().mic)}" title="${esc(u().mic)}"><span class="mic-ring"></span>${MIC_SVG}</button><div class="mic-status" data-mic-status="${key}" aria-live="polite"></div>`;
   }
 
   function micField(key) {
@@ -552,43 +554,78 @@
       : document.querySelector(`textarea[data-text="${key}"]`);
   }
 
-  function micUi(key, st, err) {
+  const fmtTime = (ms) => { const sec = Math.floor(ms / 1000); return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`; };
+
+  function micUi(key) {
+    const m = micSessions[key];
+    const st = m ? m.state : "idle";
     const btn = document.querySelector(`[data-mic="${key}"]`);
     const status = document.querySelector(`[data-mic-status="${key}"]`);
-    const ta = micField(key);
+    const field = micField(key);
     if (!btn) return;
-    btn.classList.toggle("is-rec", st === "recording");
-    btn.classList.toggle("is-connecting", st === "connecting");
-    btn.setAttribute("aria-pressed", String(st === "recording" || st === "connecting"));
-    btn.setAttribute("aria-label", st === "recording" ? u().micStop : u().mic);
-    if (ta) ta.readOnly = st === "recording" || st === "connecting";
+    const active = st === "starting" || st === "recording";
+    btn.dataset.state = st;
+    btn.setAttribute("aria-pressed", String(active));
+    btn.setAttribute("aria-label", active ? u().micStop : u().mic);
+    btn.title = active ? u().micStop : u().mic;
+    if (field) {
+      field.readOnly = active || st === "finishing";
+      field.closest(".ta-wrap")?.classList.toggle("is-listening", active);
+    }
     if (status) {
-      status.className = "mic-status" + (st === "error" ? " is-error" : "") + (st === "idle" ? "" : " show");
-      status.textContent = st === "recording" ? u().micRec : st === "connecting" ? u().micConnecting : st === "error" ? (err === "denied" ? u().micErr.denied : u().micErr.other) : "";
+      let html = "";
+      if (st === "starting") html = `<span class="dot"></span>${esc(u().micConnecting)}`;
+      else if (st === "recording") html = `<span class="dot"></span><b>${fmtTime(Date.now() - m.startedAt)}</b> ${esc(u().micRec)}`;
+      else if (st === "finishing") html = `<span class="spin"></span>${esc(u().micFinishing)}`;
+      else if (st === "error") html = esc(u().micErr[m.err] || u().micErr.other);
+      status.className = "mic-status" + (html ? " show" : "") + (st === "error" ? " is-error" : "") + (st === "recording" ? " is-rec" : "");
+      status.innerHTML = html;
     }
   }
 
-  async function toggleMic(key) {
-    if (micKey === key && window.Voice.active()) {
-      await window.Voice.stop();
+  function toggleMic(key) {
+    const m = micSessions[key];
+    if (m && (m.state === "starting" || m.state === "recording")) {
+      window.Voice.finish(m.session);
       return;
     }
-    const ta = micField(key);
-    if (!ta) return;
-    micKey = key;
-    window.Voice.start({
-      baseText: ta.value,
+    if (m && m.state === "finishing") return;
+    const field = micField(key);
+    if (!field) return;
+    const entry = { state: "starting", startedAt: Date.now(), err: null };
+    micSessions[key] = entry;
+    entry.timer = setInterval(() => { if (entry.state === "recording") micUi(key); }, 500);
+    entry.session = window.Voice.start({
+      baseText: field.value,
       onText: (text) => {
         const el = micField(key);
         if (el) { el.value = text; el.scrollTop = el.scrollHeight; el.scrollLeft = el.scrollWidth; el.closest(".q")?.classList.remove("invalid"); }
         state.answers[key] = text;
         persist();
       },
+      onLevel: (lvl) => {
+        const btn = document.querySelector(`[data-mic="${key}"]`);
+        if (btn) btn.style.setProperty("--lvl", lvl.toFixed(2));
+      },
       onState: (st, err) => {
-        if (st === "idle" || st === "error") { if (micKey === key) micKey = null; }
-        micUi(key, st, err);
+        if (micSessions[key] !== entry) return;
+        if (st === "recording" && entry.state === "starting") entry.startedAt = Date.now();
+        entry.state = st;
+        entry.err = err || null;
+        if (st === "idle" || st === "error") clearInterval(entry.timer);
+        if (st === "idle") delete micSessions[key];
+        micUi(key);
+        if (st === "error") setTimeout(() => { if (micSessions[key] === entry) { delete micSessions[key]; } }, 0);
       },
     });
+  }
+
+  // Vor „Weiter“/„Zurück“: laufende Aufnahmen beenden und auf den letzten Satz warten.
+  async function finishMics() {
+    if (!window.Voice || !window.Voice.busy()) return;
+    document.querySelectorAll(".nav .btn").forEach((b) => b.classList.add("is-waiting"));
+    await window.Voice.stopAll();
+    document.querySelectorAll(".nav .btn").forEach((b) => b.classList.remove("is-waiting"));
   }
 
   function questionsHtml(s) {
@@ -628,7 +665,7 @@
   // ── Rendering: screens ─────────────────────────────────────
   function render() {
     clearFsTimers();
-    if (window.Voice && window.Voice.active()) window.Voice.stop();
+    if (window.Voice && window.Voice.busy()) window.Voice.stopAll(); // Text wird trotzdem noch gespeichert
     const s = step();
     stepEnteredAt = Date.now();
     document.documentElement.lang = lang();

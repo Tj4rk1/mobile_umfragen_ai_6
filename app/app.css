@@ -118,25 +118,38 @@ textarea::placeholder, input::placeholder { color: var(--faint); }
 
 /* Spracheingabe */
 .ta-wrap { position: relative; }
-.ta-wrap textarea { padding-right: 56px; display: block; }
+.ta-wrap textarea { padding-right: 60px; display: block; }
 .ta-wrap.is-input { margin-top: 8px; }
 .ta-wrap.is-input .other-input { padding-right: 56px; margin-top: 0; }
-.ta-wrap.is-input .mic { bottom: auto; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; }
+.ta-wrap.is-input .mic { bottom: auto; top: 7px; width: 34px; height: 34px; }
 .req.opt-badge { color: var(--muted); }
+.ta-wrap.is-listening textarea, .ta-wrap.is-listening input { border-color: var(--danger); box-shadow: 0 0 0 4px var(--danger-soft); }
 .mic {
-  position: absolute; right: 10px; bottom: 10px; width: 36px; height: 36px; border-radius: 999px;
-  display: grid; place-items: center; border: 1px solid var(--line); background: var(--surface); color: var(--muted);
-  cursor: pointer; transition: color .15s, border-color .15s, background .15s;
+  position: absolute; right: 10px; bottom: 10px; width: 40px; height: 40px; border-radius: 999px;
+  display: grid; place-items: center; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2);
+  cursor: pointer; transition: color .15s, border-color .15s, background .15s, transform .1s; --lvl: 0;
 }
-.mic:hover { color: var(--ink); border-color: var(--line-2); }
+.mic svg { position: relative; z-index: 1; }
+.mic:hover { color: var(--ink); border-color: var(--line-2); background: var(--soft); }
+.mic:active { transform: scale(.94); }
 .mic:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--soft-2); }
-.mic.is-connecting { color: var(--ink); animation: micpulse 1s ease-in-out infinite; }
-.mic.is-rec { background: var(--danger); border-color: var(--danger); color: #fff; animation: micpulse 1.4s ease-in-out infinite; }
-@keyframes micpulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(217, 54, 62, .35); } 50% { box-shadow: 0 0 0 6px rgba(217, 54, 62, 0); } }
-.mic-status { font-size: 13px; color: var(--muted); margin-top: 6px; min-height: 0; display: none; }
-.mic-status.show { display: block; }
+.mic-ring { position: absolute; inset: -1px; border-radius: inherit; pointer-events: none; opacity: 0; }
+.mic[data-state="starting"] { color: var(--danger); border-color: #f3c4c6; }
+.mic[data-state="starting"] .mic-ring { opacity: 1; border: 2px solid transparent; border-top-color: var(--danger); animation: micspin .8s linear infinite; }
+.mic[data-state="recording"] { background: var(--danger); border-color: var(--danger); color: #fff; }
+.mic[data-state="recording"] .mic-ring { opacity: .28; background: var(--danger); transform: scale(calc(1 + var(--lvl) * .55)); transition: transform .09s linear; }
+.mic[data-state="finishing"] { color: var(--muted); }
+.mic[data-state="finishing"] .mic-ring { opacity: 1; border: 2px solid transparent; border-top-color: var(--muted); animation: micspin .8s linear infinite; }
+@keyframes micspin { to { transform: rotate(360deg); } }
+.mic-status { display: none; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); margin-top: 8px; }
+.mic-status.show { display: flex; }
+.mic-status b { font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; }
+.mic-status .dot { width: 8px; height: 8px; border-radius: 999px; background: var(--danger); flex: none; animation: micblink 1.2s ease-in-out infinite; }
+.mic-status .spin { width: 12px; height: 12px; border-radius: 999px; border: 2px solid var(--line-2); border-top-color: var(--ink-2); animation: micspin .8s linear infinite; flex: none; }
 .mic-status.is-error { color: var(--danger); }
-@media (prefers-reduced-motion: reduce) { .mic.is-rec, .mic.is-connecting { animation: none; } }
+@keyframes micblink { 50% { opacity: .3; } }
+.btn.is-waiting { opacity: .6; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .mic-ring, .mic-status .dot, .mic-status .spin { animation: none !important; } }
 textarea:focus, input:focus { outline: none; border-color: var(--line-2); box-shadow: 0 0 0 4px var(--soft-2); }
 
 .opts { display: grid; gap: 8px; grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr)); }
