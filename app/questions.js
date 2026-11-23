@@ -279,7 +279,6 @@
       id: "w1",
       section: "website",
       title: T("Was ist hängen geblieben?", "What stuck with you?"),
-      lead: T("Bitte antworten Sie spontan, ohne nachzuschauen.", "Please answer spontaneously, without looking it up."),
       note: T(
         "Kein Problem, wenn etwas unklar geblieben ist: Schreiben Sie es einfach genau so hin. Uns interessiert, wie die Website auf Sie wirkt und was beim Produkt hängen bleibt, nicht, ob Sie alles richtig verstanden haben.",
         "No problem if something remained unclear: just write it down exactly like that. We're interested in how the website comes across and what sticks about the product, not whether you understood everything correctly."
