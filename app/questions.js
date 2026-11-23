@@ -72,8 +72,8 @@
       voice: {
         title: T("Gerne frei heraus erzählen", "Feel free to just talk"),
         text: T(
-          "Am meisten helfen uns Antworten, die so frei und ungefiltert wie möglich sind. Deshalb können Sie jede Freitext-Antwort auch einsprechen: einfach auf das Mikrofon im Antwortfeld klicken. Ihre Sprache wird dann live über den Dienst AssemblyAI (Server in der EU) in Text umgewandelt. Die Aufnahme selbst wird nicht gespeichert, nur der Text landet in Ihrer Antwort, und Sie können ihn vor dem Weiterklicken jederzeit korrigieren. Die Nutzung ist freiwillig, Tippen geht natürlich genauso.",
-          "Answers that are as open and unfiltered as possible help us most. That's why you can also dictate any free-text answer: just click the microphone in the answer field. Your speech is then converted to text live by the service AssemblyAI (servers in the EU). The recording itself is not stored; only the text ends up in your answer, and you can edit it at any time before moving on. Using it is optional, typing works just as well."
+          "Am meisten helfen uns freie, ungefilterte Antworten. Deshalb können Sie jede Freitext-Antwort auch einsprechen, per Mikrofon im Antwortfeld. Die Sprache wird live über AssemblyAI (Server in der EU) in Text umgewandelt, die Aufnahme wird nicht gespeichert. Freiwillig, Tippen geht genauso.",
+          "Open, unfiltered answers help us most. That's why you can also dictate any free-text answer using the microphone in the answer field. Your speech is converted to text live by AssemblyAI (servers in the EU); the recording is not stored. Optional, typing works just as well."
         ),
         links: [
           [T("Datenschutzerklärung von AssemblyAI", "AssemblyAI privacy policy"), "https://www.assemblyai.com/legal/privacy-policy"],
