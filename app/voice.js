@@ -38,6 +38,13 @@
     const s = { closed: false, turns: new Map(), onText, onState, base: baseText ? baseText.replace(/\s+$/, "") + " " : "" };
     session = s;
     onState("connecting");
+    // AudioContext sofort (noch im Klick) anlegen, sonst startet er wegen Autoplay-Regeln pausiert.
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    // Native Abtastrate des Geräts verwenden (erzwungene 16 kHz liefern in Chrome teils Stille);
+    // AssemblyAI akzeptiert 8–96 kHz, die Rate wird beim Verbinden mitgeschickt.
+    const ctx = new Ctx();
+    s.ctx = ctx;
+    ctx.resume().catch(() => {});
     try {
       const [tokRes, stream] = await Promise.all([
         fetch("/api/stt-token", { method: "POST" }).then((r) => (r.ok ? r.json() : Promise.reject(new Error("token")))),
@@ -46,10 +53,6 @@
       s.stream = stream;
       if (s.closed) return cleanup(s);
 
-      const Ctx = window.AudioContext || window.webkitAudioContext;
-      let ctx;
-      try { ctx = new Ctx({ sampleRate: 16000 }); } catch (e) { ctx = new Ctx(); }
-      s.ctx = ctx;
       const url = URL.createObjectURL(new Blob([WORKLET], { type: "application/javascript" }));
       await ctx.audioWorklet.addModule(url);
       URL.revokeObjectURL(url);
@@ -60,14 +63,21 @@
       ws.binaryType = "arraybuffer";
       s.ws = ws;
 
-      ws.onopen = () => {
+      ws.onopen = async () => {
         if (s.closed) return;
         const src = ctx.createMediaStreamSource(stream);
         const node = new AudioWorkletNode(ctx, "pcm16");
         node.port.onmessage = (e) => { if (ws.readyState === 1) ws.send(e.data); };
+        // Stummer Ausgang, damit der Browser den Prozessor sicher laufen lässt
+        const mute = ctx.createGain();
+        mute.gain.value = 0;
         src.connect(node);
+        node.connect(mute);
+        mute.connect(ctx.destination);
         s.node = node;
         s.src = src;
+        s.mute = mute;
+        try { await ctx.resume(); } catch (e) {}
         onState("recording");
       };
       ws.onmessage = (e) => {
@@ -104,6 +114,7 @@
     s.closed = true;
     try { s.src && s.src.disconnect(); } catch (e) {}
     try { s.node && s.node.disconnect(); } catch (e) {}
+    try { s.mute && s.mute.disconnect(); } catch (e) {}
     try { s.stream && s.stream.getTracks().forEach((t) => t.stop()); } catch (e) {}
     try { s.ctx && s.ctx.close(); } catch (e) {}
     try { s.ws && s.ws.readyState <= 1 && s.ws.close(); } catch (e) {}
@@ -118,10 +129,13 @@
     s.stopping = true;
     try { s.stream && s.stream.getTracks().forEach((t) => t.stop()); } catch (e) {}
     if (s.ws && s.ws.readyState === 1) {
-      try { s.ws.send(JSON.stringify({ type: "Terminate" })); } catch (e) {}
+      // Erst den laufenden Satz abschließen lassen (vollständige, formatierte Fassung), dann beenden.
+      try { s.ws.send(JSON.stringify({ type: "ForceEndpoint" })); } catch (e) {}
+      const ws = s.ws;
+      setTimeout(() => { try { ws.readyState === 1 && ws.send(JSON.stringify({ type: "Terminate" })); } catch (e) {} }, 700);
       return new Promise((resolve) => {
         const done = () => { cleanup(s); resolve(); };
-        const t = setTimeout(done, 2500);
+        const t = setTimeout(done, 3500);
         const prev = s.ws.onclose;
         s.ws.onclose = (e) => { clearTimeout(t); prev && prev(e); done(); };
       });
