@@ -16,6 +16,7 @@ Desktop first, mobil nutzbar. Statisches Frontend auf Vercel, Daten in Supabase 
 - `app/survey.js`: Ablauf, Website-Test (Briefing → Countdown → 60 s → automatisch ausblenden), Split-View.
 - `app/admin.js`: Kennzahlen, Antworten je Frage, Teilnehmende, Kontakte, CSV-Export (Excel-kompatibel, `;`).
 - `api/site.js` + `vercel.json`: Website-Proxy (siehe unten).
+- `app/voice.js` + `api/stt-token.js`: Spracheingabe in Echtzeit (AssemblyAI, EU), Key in Vercel-Env `ASSEMBLYAI_API_KEY`.
 - `supabase/migrations/20261122120000_kolsetu_interview.sql`: Studien-Condition, RPC `save_interview_progress`, gesperrte direkte Schreibrechte.
 - `archive/2026-06-ki-markenstudie/`: die alte Studie.
 

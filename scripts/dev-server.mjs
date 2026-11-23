@@ -5,6 +5,7 @@ import { readFile, stat } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 import handler from "../api/site.js";
+import sttToken from "../api/stt-token.js";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const port = Number(process.env.PORT || 4173);
@@ -37,6 +38,12 @@ http
     const url = new URL(req.url, `http://${req.headers.host}`);
     const route = routeFor(req, url);
     try {
+      if (url.pathname === "/api/stt-token") {
+        const r = await sttToken(new Request(url, { method: req.method, headers: Object.entries(req.headers).filter(([, v]) => typeof v === "string") }));
+        res.writeHead(r.status, Object.fromEntries(r.headers));
+        res.end(await r.text());
+        return;
+      }
       if (route.file) {
         const filePath = normalize(join(root, decodeURIComponent(route.file)));
         if (!filePath.startsWith(root)) throw new Error("bad path");

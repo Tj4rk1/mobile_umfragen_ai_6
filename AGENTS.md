@@ -31,3 +31,11 @@ Teil des Uni-Projekts „Interdisziplinäres Projekt“ (Kolsetu / Elba, Markenw
 
 - Jede Änderung ist ein Git-Commit; zurück mit `git revert <sha>` + Push. Vor größeren Umbauten einen Tag setzen (z. B. `vor-fragen-umbau-2026-11-23`).
 - Vercel behält alte Deployments: im Dashboard unter Deployments → „Instant Rollback“.
+
+## Spracheingabe (Mikrofon in allen Freitext-Feldern)
+
+- `app/voice.js`: Mikrofon → AudioWorklet (PCM16) → WebSocket `wss://streaming.eu.assemblyai.com/v3/ws`, Modell `universal-3-6-pro` (DE + EN automatisch, auch gemischt). Text erscheint live im Feld.
+- `api/stt-token.js`: holt einen kurzlebigen Streaming-Token (EU, 60 s zum Verbinden, max. 10 min). Nur mit Origin der eigenen Domain. Der Key steht ausschließlich in der Vercel-Umgebungsvariable `ASSEMBLYAI_API_KEY`, nie im Code.
+- Mic-Button kommt in `questionInner` (`case "text"`) über `micHtml`; Aufnahme stoppt automatisch beim Seitenwechsel (`render`).
+- Lokal testen: `ASSEMBLYAI_API_KEY=… node --experimental-detect-module scripts/dev-server.mjs`.
+- Datenschutzhinweis im Intro erwähnt AssemblyAI; bei Anbieterwechsel anpassen.

@@ -26,6 +26,8 @@
       previewEnd: "Vorschau: Es wurde nichts gespeichert.", restart: "Neu starten",
       endErr: "Ihre letzten Antworten konnten nicht übertragen werden. Bitte prüfen Sie Ihre Verbindung.", retry: "Erneut senden", sent: "Übertragen. Danke!",
       newline: "Shift + Enter: neue Zeile", progress: (p) => `Fortschritt ${p} Prozent`,
+      mic: "Antwort einsprechen", micStop: "Aufnahme beenden", micConnecting: "Mikrofon wird verbunden …", micRec: "Hört zu … zum Beenden nochmal klicken",
+      micErr: { denied: "Kein Zugriff auf das Mikrofon. Bitte im Browser erlauben.", other: "Spracheingabe gerade nicht verfügbar. Bitte tippen Sie Ihre Antwort." },
     },
     en: {
       next: "Next", back: "Back", submit: "Submit", start: "Let’s start",
@@ -44,6 +46,8 @@
       previewEnd: "Preview: nothing was saved.", restart: "Start over",
       endErr: "Your latest answers couldn't be sent. Please check your connection.", retry: "Send again", sent: "Sent. Thank you!",
       newline: "Shift + Enter: new line", progress: (p) => `Progress ${p} percent`,
+      mic: "Dictate your answer", micStop: "Stop recording", micConnecting: "Connecting microphone …", micRec: "Listening … click again to stop",
+      micErr: { denied: "No access to the microphone. Please allow it in your browser.", other: "Voice input isn't available right now. Please type your answer." },
     },
   };
   const SURVEY_LANGS = [
@@ -501,7 +505,7 @@
       case "consent":
         return `<button type="button" class="consent" data-consent="${q.key}" aria-checked="${a[q.key] === true}"><span class="box"></span><span>${esc(t(q.label))}</span></button>`;
       case "text":
-        return `${labelHtml(q)}<textarea rows="${q.rows || 3}" data-text="${q.key}" placeholder="${esc(t(q.placeholder) || "")}" aria-labelledby="lbl-${q.key}">${esc(a[q.key] || "")}</textarea>`;
+        return `${labelHtml(q)}<div class="ta-wrap"><textarea rows="${q.rows || 3}" data-text="${q.key}" placeholder="${esc(t(q.placeholder) || "")}" aria-labelledby="lbl-${q.key}">${esc(a[q.key] || "")}</textarea>${micHtml(q.key)}</div>`;
       case "email":
         return `${labelHtml(q)}<input type="email" autocomplete="email" data-text="${q.key}" placeholder="${esc(t(q.placeholder) || "")}" value="${esc(a[q.key] || "")}">`;
       case "single":
@@ -531,6 +535,55 @@
       default:
         return "";
     }
+  }
+
+  // ── Spracheingabe (app/voice.js) ───────────────────────────
+  const MIC_SVG = `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>`;
+  let micKey = null;
+
+  function micHtml(key) {
+    if (!window.Voice || !window.Voice.supported()) return "";
+    return `<button type="button" class="mic" data-mic="${key}" aria-pressed="false" aria-label="${esc(u().mic)}" title="${esc(u().mic)}">${MIC_SVG}</button><div class="mic-status" data-mic-status="${key}" aria-live="polite"></div>`;
+  }
+
+  function micUi(key, st, err) {
+    const btn = document.querySelector(`[data-mic="${key}"]`);
+    const status = document.querySelector(`[data-mic-status="${key}"]`);
+    const ta = document.querySelector(`textarea[data-text="${key}"]`);
+    if (!btn) return;
+    btn.classList.toggle("is-rec", st === "recording");
+    btn.classList.toggle("is-connecting", st === "connecting");
+    btn.setAttribute("aria-pressed", String(st === "recording" || st === "connecting"));
+    btn.setAttribute("aria-label", st === "recording" ? u().micStop : u().mic);
+    if (ta) ta.readOnly = st === "recording" || st === "connecting";
+    if (status) {
+      status.className = "mic-status" + (st === "error" ? " is-error" : "") + (st === "idle" ? "" : " show");
+      status.textContent = st === "recording" ? u().micRec : st === "connecting" ? u().micConnecting : st === "error" ? (err === "denied" ? u().micErr.denied : u().micErr.other) : "";
+    }
+  }
+
+  async function toggleMic(key) {
+    if (micKey === key && window.Voice.active()) {
+      await window.Voice.stop();
+      return;
+    }
+    if (micKey) await window.Voice.stop();
+    const ta = document.querySelector(`textarea[data-text="${key}"]`);
+    if (!ta) return;
+    micKey = key;
+    window.Voice.start({
+      baseText: ta.value,
+      onText: (text) => {
+        const el = document.querySelector(`textarea[data-text="${key}"]`);
+        if (el) { el.value = text; el.scrollTop = el.scrollHeight; el.closest(".q")?.classList.remove("invalid"); }
+        state.answers[key] = text;
+        persist();
+      },
+      onState: (st, err) => {
+        if (st === "idle" || st === "error") { if (micKey === key) micKey = null; }
+        micUi(key, st, err);
+      },
+    });
   }
 
   function questionsHtml(s) {
@@ -570,6 +623,7 @@
   // ── Rendering: screens ─────────────────────────────────────
   function render() {
     clearFsTimers();
+    if (window.Voice && window.Voice.active()) window.Voice.stop();
     const s = step();
     stepEnteredAt = Date.now();
     document.documentElement.lang = lang();
@@ -875,6 +929,7 @@
       const a = state.answers;
 
       if (b.dataset.surveyLang) return chooseSurveyLang(b.dataset.surveyLang);
+      if (b.dataset.mic) return toggleMic(b.dataset.mic);
       if (b.dataset.act === "next") return next();
       if (b.dataset.act === "back") return back();
       if (b.dataset.act === "fivesec") return startFivesec();

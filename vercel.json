@@ -6,7 +6,7 @@
     { "source": "/", "has": [{ "type": "header", "key": "rsc" }], "destination": "/api/site?__p=/" },
     { "source": "/", "destination": "/app/index.html" },
     { "source": "/admin", "destination": "/app/index.html" },
-    { "source": "/:path((?!app/|archive/|api/site).*)", "destination": "/api/site?__p=/:path" }
+    { "source": "/:path((?!app/|archive/|api/site|api/stt-token).*)", "destination": "/api/site?__p=/:path" }
   ],
   "headers": [
     {
