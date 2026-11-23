@@ -13,6 +13,8 @@
   const ATTEMPT_DELAYS = [0, 0, 1500, 3000, 5000, 8000, 12000];
   const AVOID_MS = 60000; // nach einer Ablehnung den Anbieter 60 s lang zuerst überspringen
   const ELEVEN_RATES = [8000, 16000, 22050, 24000, 44100, 48000];
+  const CONNECT_TIMEOUT_MS = 4000; // kommt bis dahin keine Bestätigung vom Anbieter → nächster Anbieter
+  const log = (...a) => { try { console.info("[Spracheingabe]", ...a); } catch (e) {} };
 
   function b64(buf) {
     const bytes = new Uint8Array(buf);
@@ -125,7 +127,7 @@
 
   // callbacks: onText(fullText), onState(state, errCode), onLevel(0..1)
   // states: "starting" → "recording" → "finishing" → "idle" | "error"
-  function start({ baseText, onText, onState, onLevel }) {
+  function start({ baseText, onText, onState, onLevel, onConn }) {
     if (current) finish(current); // alte Aufnahme im Hintergrund abschließen, nicht darauf warten
 
     const Ctx = window.AudioContext || window.webkitAudioContext;
@@ -133,7 +135,7 @@
     ctx.resume().catch(() => {});
 
     const s = {
-      ctx, onText, onState, onLevel: onLevel || (() => {}),
+      ctx, onText, onState, onLevel: onLevel || (() => {}), onConn: onConn || (() => {}),
       base: baseText && baseText.trim() ? baseText.replace(/\s+$/, "") + " " : "",
       turns: new Map(), el: { committed: [], partial: "" }, queue: [], ws: null, stream: null, nodes: [], provider: null,
       state: "starting", done: false,
@@ -196,6 +198,14 @@
     s.P = P;
     let begun = false;
     let failed = false;
+    log("verbinde", name, "Versuch", attempt + 1, "@", s.ctx.sampleRate, "Hz");
+    // Hängt die Verbindung (kein Fehler, aber auch keine Bestätigung), nicht ewig warten
+    const timeout = setTimeout(() => {
+      if (begun || s.cleaned || s.ws !== ws) return;
+      log(name, "antwortet nicht – wechsle");
+      next(s, attempt, "connection", name);
+      try { ws.close(); } catch (err) {}
+    }, CONNECT_TIMEOUT_MS);
     ws.onmessage = (e) => {
       if (s.ws !== ws) return;
       let m;
@@ -203,6 +213,9 @@
       const r = P.handle(s, m);
       if (r === "begin") {
         begun = true;
+        clearTimeout(timeout);
+        log(name, "verbunden,", s.queue.length, "gepufferte Blöcke nachgeschickt");
+        s.onConn(true, name);
         for (const chunk of s.queue) P.send(ws, chunk, s.ctx.sampleRate);
         s.queue = [];
         s.live = true;
@@ -210,13 +223,16 @@
       } else if (r === "text") {
         emit(s);
       } else if (r === "fail" && !begun) {
+        log(name, "abgelehnt:", m.error || m.message_type);
         failed = true;
         try { ws.close(); } catch (err) {}
       }
     };
     ws.onerror = () => {};
     ws.onclose = (e) => {
+      clearTimeout(timeout);
       if (s.cleaned || s.ws !== ws) return;
+      log(name, "geschlossen", e.code, e.reason || "");
       if (begun && s.done) return cleanup(s);
       if (!begun || failed) return next(s, attempt, e.code === 1008 ? "busy" : "connection", name); // abgelehnt → anderer Anbieter
       fail(s, "connection");
@@ -227,6 +243,7 @@
     if (s.cleaned) return;
     s.ws = null;
     s.live = false;
+    s.onConn(false, null);
     avoid(name);
     if (attempt + 1 >= s.plan.length) return fail(s, code);
     if (s.flushed && !s.queue.length) return cleanup(s); // nichts mehr zu übertragen

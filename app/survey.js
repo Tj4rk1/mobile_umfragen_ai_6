@@ -26,7 +26,7 @@
       previewEnd: "Vorschau: Es wurde nichts gespeichert.", restart: "Neu starten",
       endErr: "Ihre letzten Antworten konnten nicht übertragen werden. Bitte prüfen Sie Ihre Verbindung.", retry: "Erneut senden", sent: "Übertragen. Danke!",
       newline: "Shift + Enter: neue Zeile", progress: (p) => `Fortschritt ${p} Prozent`,
-      mic: "Antwort einsprechen", micStop: "Aufnahme beenden", micConnecting: "Mikrofon wird gestartet …", micRec: "Sprechen Sie einfach los. Zum Beenden aufs Mikrofon klicken.", micFinishing: "Text wird fertiggestellt …",
+      mic: "Antwort einsprechen", micStop: "Aufnahme beenden", micConnecting: "Mikrofon wird gestartet …", micRec: "Sprechen Sie einfach los. Zum Beenden aufs Mikrofon klicken.", micFinishing: "Text wird fertiggestellt …", micWaiting: "Verbindung wird aufgebaut … Sie können schon weitersprechen, es geht nichts verloren.",
       micErr: { denied: "Kein Zugriff auf das Mikrofon. Bitte im Browser erlauben (Schloss-Symbol in der Adresszeile).", nomic: "Kein Mikrofon gefunden.", busy: "Die Spracheingabe ist gerade ausgelastet. Bitte in einer Minute erneut versuchen oder tippen.", other: "Spracheingabe gerade nicht verfügbar. Bitte tippen Sie Ihre Antwort." },
     },
     en: {
@@ -46,7 +46,7 @@
       previewEnd: "Preview: nothing was saved.", restart: "Start over",
       endErr: "Your latest answers couldn't be sent. Please check your connection.", retry: "Send again", sent: "Sent. Thank you!",
       newline: "Shift + Enter: new line", progress: (p) => `Progress ${p} percent`,
-      mic: "Dictate your answer", micStop: "Stop recording", micConnecting: "Starting microphone …", micRec: "Just start talking. Click the microphone to stop.", micFinishing: "Finishing text …",
+      mic: "Dictate your answer", micStop: "Stop recording", micConnecting: "Starting microphone …", micRec: "Just start talking. Click the microphone to stop.", micFinishing: "Finishing text …", micWaiting: "Connecting … keep talking, nothing gets lost.",
       micErr: { denied: "No access to the microphone. Please allow it in your browser (lock icon in the address bar).", nomic: "No microphone found.", busy: "Voice input is busy right now. Please try again in a minute or type.", other: "Voice input isn't available right now. Please type your answer." },
     },
   };
@@ -575,7 +575,7 @@
     if (status) {
       let html = "";
       if (st === "starting") html = `<span class="dot"></span>${esc(u().micConnecting)}`;
-      else if (st === "recording") html = `<span class="dot"></span><b>${fmtTime(Date.now() - m.startedAt)}</b> ${esc(u().micRec)}`;
+      else if (st === "recording") html = `<span class="dot"></span><b>${fmtTime(Date.now() - m.startedAt)}</b> ${esc(!m.live && Date.now() - m.startedAt > 2000 ? u().micWaiting : u().micRec)}`;
       else if (st === "finishing") html = `<span class="spin"></span>${esc(u().micFinishing)}`;
       else if (st === "error") html = esc(u().micErr[m.err] || u().micErr.other);
       status.className = "mic-status" + (html ? " show" : "") + (st === "error" ? " is-error" : "") + (st === "recording" ? " is-rec" : "");
@@ -603,6 +603,7 @@
         state.answers[key] = text;
         persist();
       },
+      onConn: (live) => { entry.live = live; micUi(key); },
       onLevel: (lvl) => {
         const btn = document.querySelector(`[data-mic="${key}"]`);
         if (btn) btn.style.setProperty("--lvl", lvl.toFixed(2));
