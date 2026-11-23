@@ -11,7 +11,7 @@
   const UI = {
     de: {
       next: "Weiter", back: "Zurück", submit: "Absenden", start: "Los geht’s",
-      required: "Pflicht", answerThis: "Bitte beantworten Sie diese Frage.", emailInvalid: "Bitte eine gültige E-Mail-Adresse angeben.",
+      required: "Pflicht", optional: "freiwillig", answerThis: "Bitte beantworten Sie diese Frage.", emailInvalid: "Bitte eine gültige E-Mail-Adresse angeben.",
       other: "Andere, und zwar …", otherPh: "Bitte kurz angeben", maxNote: (n, m) => `${n} von max. ${m} gewählt`, unknown: "Weiß ich nicht",
       preview: "Vorschau · speichert nicht", offline: "Offline",
       save: { pending: "Speichert …", error: "Nicht gespeichert", ok: "Gespeichert", idle: "Automatisch gespeichert" },
@@ -31,7 +31,7 @@
     },
     en: {
       next: "Next", back: "Back", submit: "Submit", start: "Let’s start",
-      required: "Required", answerThis: "Please answer this question.", emailInvalid: "Please enter a valid email address.",
+      required: "Required", optional: "optional", answerThis: "Please answer this question.", emailInvalid: "Please enter a valid email address.",
       other: "Other, namely …", otherPh: "Please specify", maxNote: (n, m) => `${n} of max. ${m} selected`, unknown: "I don't know",
       preview: "Preview · not saved", offline: "Offline",
       save: { pending: "Saving …", error: "Not saved", ok: "Saved", idle: "Saved automatically" },
@@ -463,7 +463,7 @@
 
   // ── Rendering: questions ───────────────────────────────────
   function labelHtml(q) {
-    return `<div class="q-label" id="lbl-${q.key}" data-err="${esc(q.type === "email" ? u().emailInvalid : u().answerThis)}">${esc(t(q.label))}${q.required ? `<span class="req">${esc(u().required)}</span>` : ""}</div>${q.hint ? `<div class="q-hint">${esc(t(q.hint))}</div>` : ""}`;
+    return `<div class="q-label" id="lbl-${q.key}" data-err="${esc(q.type === "email" ? u().emailInvalid : u().answerThis)}">${esc(t(q.label))}${!q.required ? `<span class="req opt-badge">${esc(u().optional)}</span>` : ""}</div>${q.hint ? `<div class="q-hint">${esc(t(q.hint))}</div>` : ""}`;
   }
 
   function optionButtons(q, { multi = false } = {}) {
@@ -480,7 +480,7 @@
         })
         .join("")}
     </div>
-    ${q.other && selected(OTHER) ? `<input class="other-input" type="text" data-other="${q.key}" placeholder="${esc(u().otherPh)}" value="${esc(state.answers[q.key + "__andere"] || "")}">` : ""}
+    ${q.other && selected(OTHER) ? `<div class="ta-wrap is-input"><input class="other-input" type="text" data-other="${q.key}" placeholder="${esc(u().otherPh)}" value="${esc(state.answers[q.key + "__andere"] || "")}">${micHtml(q.key + "__andere")}</div>` : ""}
     ${q.max ? `<div class="limit-note">${esc(u().maxNote(Array.isArray(a) ? a.length : 0, q.max))}</div>` : ""}`;
   }
 
@@ -546,10 +546,16 @@
     return `<button type="button" class="mic" data-mic="${key}" aria-pressed="false" aria-label="${esc(u().mic)}" title="${esc(u().mic)}">${MIC_SVG}</button><div class="mic-status" data-mic-status="${key}" aria-live="polite"></div>`;
   }
 
+  function micField(key) {
+    return key.endsWith("__andere")
+      ? document.querySelector(`input[data-other="${key.slice(0, -8)}"]`)
+      : document.querySelector(`textarea[data-text="${key}"]`);
+  }
+
   function micUi(key, st, err) {
     const btn = document.querySelector(`[data-mic="${key}"]`);
     const status = document.querySelector(`[data-mic-status="${key}"]`);
-    const ta = document.querySelector(`textarea[data-text="${key}"]`);
+    const ta = micField(key);
     if (!btn) return;
     btn.classList.toggle("is-rec", st === "recording");
     btn.classList.toggle("is-connecting", st === "connecting");
@@ -567,15 +573,14 @@
       await window.Voice.stop();
       return;
     }
-    if (micKey) await window.Voice.stop();
-    const ta = document.querySelector(`textarea[data-text="${key}"]`);
+    const ta = micField(key);
     if (!ta) return;
     micKey = key;
     window.Voice.start({
       baseText: ta.value,
       onText: (text) => {
-        const el = document.querySelector(`textarea[data-text="${key}"]`);
-        if (el) { el.value = text; el.scrollTop = el.scrollHeight; el.closest(".q")?.classList.remove("invalid"); }
+        const el = micField(key);
+        if (el) { el.value = text; el.scrollTop = el.scrollHeight; el.scrollLeft = el.scrollWidth; el.closest(".q")?.classList.remove("invalid"); }
         state.answers[key] = text;
         persist();
       },

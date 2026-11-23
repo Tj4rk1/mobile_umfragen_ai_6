@@ -119,6 +119,10 @@ textarea::placeholder, input::placeholder { color: var(--faint); }
 /* Spracheingabe */
 .ta-wrap { position: relative; }
 .ta-wrap textarea { padding-right: 56px; display: block; }
+.ta-wrap.is-input { margin-top: 8px; }
+.ta-wrap.is-input .other-input { padding-right: 56px; margin-top: 0; }
+.ta-wrap.is-input .mic { bottom: auto; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; }
+.req.opt-badge { color: var(--muted); }
 .mic {
   position: absolute; right: 10px; bottom: 10px; width: 36px; height: 36px; border-radius: 999px;
   display: grid; place-items: center; border: 1px solid var(--line); background: var(--surface); color: var(--muted);

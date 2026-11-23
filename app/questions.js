@@ -345,7 +345,7 @@
           type: "text",
           rows: 2,
           label: T("Was ist Ihnen sonst noch in Erinnerung geblieben?", "What else do you remember?"),
-          placeholder: T("Wörter, Bilder, Farben, Gefühl … (optional)", "Words, images, colours, feelings … (optional)"),
+          placeholder: T("Wörter, Bilder, Farben, Gefühl …", "Words, images, colours, feelings …"),
         },
       ],
     },
@@ -618,7 +618,7 @@
           type: "text",
           rows: 2,
           label: T("Kennen Sie jemanden, mit dem wir auch sprechen sollten?", "Do you know someone else we should talk to?"),
-          placeholder: T("Rolle oder Unternehmen genügt (optional)", "Role or company is enough (optional)"),
+          placeholder: T("Rolle oder Unternehmen genügt", "Role or company is enough"),
         },
         {
           key: "kontakt",
@@ -643,6 +643,9 @@
       ),
     },
   ];
+
+  // Alle Fragen sind Pflicht. Einzige Ausnahme: die freiwillige Kontakt-E-Mail (Anonymität).
+  steps.forEach((s) => (s.questions || []).forEach((q) => { if (q.type !== "email") q.required = true; }));
 
   window.STUDY = { sections, steps };
 })();

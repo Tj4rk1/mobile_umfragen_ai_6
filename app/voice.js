@@ -34,17 +34,15 @@
 
   // onText(fullText) bei jeder Änderung, onState("connecting"|"recording"|"idle"|"error", errCode)
   async function start({ baseText, onText, onState }) {
+    // AudioContext sofort (noch synchron im Klick) anlegen, sonst startet er wegen Autoplay-Regeln pausiert.
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    const ctx = new Ctx();
+    ctx.resume().catch(() => {});
     await stop();
     const s = { closed: false, turns: new Map(), onText, onState, base: baseText ? baseText.replace(/\s+$/, "") + " " : "" };
     session = s;
     onState("connecting");
-    // AudioContext sofort (noch im Klick) anlegen, sonst startet er wegen Autoplay-Regeln pausiert.
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    // Native Abtastrate des Geräts verwenden (erzwungene 16 kHz liefern in Chrome teils Stille);
-    // AssemblyAI akzeptiert 8–96 kHz, die Rate wird beim Verbinden mitgeschickt.
-    const ctx = new Ctx();
     s.ctx = ctx;
-    ctx.resume().catch(() => {});
     try {
       const [tokRes, stream] = await Promise.all([
         fetch("/api/stt-token", { method: "POST" }).then((r) => (r.ok ? r.json() : Promise.reject(new Error("token")))),

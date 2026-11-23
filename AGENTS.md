@@ -13,7 +13,7 @@ Teil des Uni-Projekts „Interdisziplinäres Projekt“ (Kolsetu / Elba, Markenw
 
 - Alles in `app/questions.js`. Texte immer als `T(de, en)`, beide Sprachen pflegen.
 - Gespeichert wird der deutsche Wortlaut der Optionen. Optionstexte umbenennen oder `key` ändern trennt neue von alten Antworten in der Auswertung, das dem Nutzer sagen.
-- Pflichtfragen (`required: true`) sind in der README als Leitfaden-Nummern (F1–F21) gelistet; beim Entfernen dort mitpflegen.
+- Alle Fragen sind Pflicht: wird am Ende von `questions.js` automatisch gesetzt. Einzige Ausnahme ist die Kontakt-E-Mail (freiwillig, Anonymität); sie bekommt das Badge „freiwillig“.
 - Bei Mehrfachauswahl (`type: "multi"`) ist „Weiß ich nicht“ (`DONT_KNOW`) exklusiv: Auswahl löscht die anderen Antworten (Logik in `app/survey.js`, Klick-Handler).
 - Intro-Kacheln (`facts`) liegen im CSS-Grid `.facts` in `app/app.css`; Spaltenzahl an die Anzahl der Kacheln anpassen (aktuell 2).
 
@@ -36,6 +36,6 @@ Teil des Uni-Projekts „Interdisziplinäres Projekt“ (Kolsetu / Elba, Markenw
 
 - `app/voice.js`: Mikrofon → AudioWorklet (PCM16) → WebSocket `wss://streaming.eu.assemblyai.com/v3/ws`, Modell `universal-3-6-pro` (DE + EN automatisch, auch gemischt). Text erscheint live im Feld.
 - `api/stt-token.js`: holt einen kurzlebigen Streaming-Token (EU, 60 s zum Verbinden, max. 10 min). Nur mit Origin der eigenen Domain. Der Key steht ausschließlich in der Vercel-Umgebungsvariable `ASSEMBLYAI_API_KEY`, nie im Code.
-- Mic-Button kommt in `questionInner` (`case "text"`) über `micHtml`; Aufnahme stoppt automatisch beim Seitenwechsel (`render`).
+- Mic-Button in jedem Textfeld (`case "text"`) und in „Andere, und zwar …“ (`optionButtons`) über `micHtml`; nicht im E-Mail-Feld; Aufnahme stoppt automatisch beim Seitenwechsel (`render`).
 - Lokal testen: `ASSEMBLYAI_API_KEY=… node --experimental-detect-module scripts/dev-server.mjs`.
 - Datenschutzhinweis im Intro erwähnt AssemblyAI; bei Anbieterwechsel anpassen.
