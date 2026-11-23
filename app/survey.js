@@ -586,15 +586,18 @@
   function toggleMic(key) {
     const m = micSessions[key];
     if (m && (m.state === "starting" || m.state === "recording")) {
-      window.Voice.finish(m.session);
+      if (m.session) window.Voice.finish(m.session);
+      else { clearInterval(m.timer); delete micSessions[key]; micUi(key); }
       return;
     }
-    if (m && m.state === "finishing") return;
+    if (m && m.state === "finishing" && Date.now() - (m.finishingAt || 0) < 8000) return;
     const field = micField(key);
     if (!field) return;
     const entry = { state: "starting", startedAt: Date.now(), err: null };
     micSessions[key] = entry;
+    micUi(key); // sofort sichtbares Feedback, noch bevor das Mikrofon bereit ist
     entry.timer = setInterval(() => { if (entry.state === "recording") micUi(key); }, 500);
+    try {
     entry.session = window.Voice.start({
       baseText: field.value,
       onText: (text) => {
@@ -616,9 +619,19 @@
         if (st === "idle" || st === "error") clearInterval(entry.timer);
         if (st === "idle") delete micSessions[key];
         micUi(key);
+        if (st === "finishing") entry.finishingAt = Date.now();
         if (st === "error") setTimeout(() => { if (micSessions[key] === entry) { delete micSessions[key]; } }, 0);
       },
     });
+    } catch (err) {
+      // Start ist komplett gescheitert: nie stumm bleiben, sondern Fehler anzeigen
+      try { console.error("[Spracheingabe] Start fehlgeschlagen", err); } catch (e) {}
+      clearInterval(entry.timer);
+      entry.state = "error";
+      entry.err = "other";
+      micUi(key);
+      delete micSessions[key];
+    }
   }
 
   // Vor „Weiter“/„Zurück“: laufende Aufnahmen beenden und auf den letzten Satz warten.

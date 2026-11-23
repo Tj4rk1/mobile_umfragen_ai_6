@@ -47,3 +47,5 @@ Teil des Uni-Projekts „Interdisziplinäres Projekt“ (Kolsetu / Elba, Markenw
 - Browser-Test ohne echtes Mikrofon: Puppeteer mit überschriebenem `getUserMedia`, das eine WAV-Datei (`say` + `afconvert`) als Stream liefert. Der Fake-Device-Modus von Chrome headless liefert nur Stille.
 - Hängt eine Verbindung (keine Bestätigung vom Anbieter), wird nach 4 s (`CONNECT_TIMEOUT_MS`) zum nächsten Anbieter gewechselt; der Status zeigt dann „Verbindung wird aufgebaut …“. Fehlersuche: Browser-Konsole, alle Schritte sind mit `[Spracheingabe]` geloggt (Anbieter, Versuch, Ablehnungsgrund, gepufferte Blöcke).
 - Ein Klick auf das Mikrofon reicht, das Textfeld muss vorher nicht angeklickt werden.
+- Ein gemeinsamer `AudioContext` für alle Aufnahmen (`getCtx()` in `voice.js`), nicht pro Aufnahme neu anlegen: Browser begrenzen die Anzahl, danach scheitert der Start stumm.
+- Diagnose für Nutzer: `/?preview=1&debug=1` blendet unten links ein Log-Panel mit allen `[Spracheingabe]`-Schritten ein.

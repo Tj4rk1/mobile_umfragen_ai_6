@@ -14,7 +14,21 @@
   const AVOID_MS = 60000; // nach einer Ablehnung den Anbieter 60 s lang zuerst überspringen
   const ELEVEN_RATES = [8000, 16000, 22050, 24000, 44100, 48000];
   const CONNECT_TIMEOUT_MS = 4000; // kommt bis dahin keine Bestätigung vom Anbieter → nächster Anbieter
-  const log = (...a) => { try { console.info("[Spracheingabe]", ...a); } catch (e) {} };
+  const DEBUG = /[?&]debug=1/.test(location.search);
+  const T0 = performance.now();
+  const log = (...a) => {
+    try { console.info("[Spracheingabe]", ...a); } catch (e) {}
+    if (!DEBUG) return;
+    let box = document.getElementById("voice-debug");
+    if (!box) {
+      box = document.createElement("pre");
+      box.id = "voice-debug";
+      box.style.cssText = "position:fixed;left:8px;bottom:8px;z-index:9999;max-width:min(560px,90vw);max-height:40vh;overflow:auto;margin:0;padding:8px 10px;font:11px/1.4 ui-monospace,monospace;background:rgba(0,0,0,.82);color:#9f9;border-radius:8px;white-space:pre-wrap;user-select:text";
+      document.body.appendChild(box);
+    }
+    box.textContent += ((performance.now() - T0) / 1000).toFixed(1) + "s " + a.map((x) => (typeof x === "string" ? x : JSON.stringify(x))).join(" ") + "\n";
+    box.scrollTop = box.scrollHeight;
+  };
 
   function b64(buf) {
     const bytes = new Uint8Array(buf);
@@ -109,6 +123,18 @@
     registerProcessor("pcm16", Pcm16);`;
 
   let workletUrl = null;
+  let sharedCtx = null;
+  let workletReady = null;
+  function getCtx() {
+    if (!sharedCtx || sharedCtx.state === "closed") {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      sharedCtx = new Ctx();
+      workletReady = null;
+      log("AudioContext angelegt", sharedCtx.sampleRate + " Hz");
+    }
+    sharedCtx.resume().catch(() => {});
+    return sharedCtx;
+  }
   const sessions = new Set();
   let current = null;
 
@@ -130,9 +156,7 @@
   function start({ baseText, onText, onState, onLevel, onConn }) {
     if (current) finish(current); // alte Aufnahme im Hintergrund abschließen, nicht darauf warten
 
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    const ctx = new Ctx(); // synchron im Klick anlegen
-    ctx.resume().catch(() => {});
+    const ctx = getCtx(); // synchron im Klick (Autoplay-Regeln), wird für alle Aufnahmen wiederverwendet
 
     const s = {
       ctx, onText, onState, onLevel: onLevel || (() => {}), onConn: onConn || (() => {}),
@@ -142,6 +166,7 @@
     };
     sessions.add(s);
     current = s;
+    log("Start", "offene Aufnahmen: " + sessions.size);
     setState(s, "starting");
     run(s);
     return s;
@@ -161,6 +186,7 @@
       s.stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
     } catch (err) {
       const n = err && err.name;
+      log("Mikrofon-Fehler:", n || String(err));
       return fail(s, n === "NotAllowedError" || n === "SecurityError" ? "denied" : n === "NotFoundError" ? "nomic" : "mic");
     }
     if (s.cleaned) return stopMic(s);
@@ -168,6 +194,7 @@
       await s.ctx.resume();
       await capture(s);
     } catch (err) {
+      log("Audio-Fehler:", (err && (err.name + " " + err.message)) || String(err));
       return fail(s, "mic");
     }
     if (s.cleaned) return stopMic(s);
@@ -272,7 +299,8 @@
     try {
       if (!ctx.audioWorklet) throw new Error("no worklet");
       if (!workletUrl) workletUrl = URL.createObjectURL(new Blob([WORKLET], { type: "application/javascript" }));
-      await ctx.audioWorklet.addModule(workletUrl);
+      if (!workletReady) workletReady = ctx.audioWorklet.addModule(workletUrl);
+      await workletReady;
       node = new AudioWorkletNode(ctx, "pcm16");
       node.port.onmessage = (e) => onChunk(e.data);
     } catch (e) {
@@ -292,7 +320,8 @@
 
   // Aufnahme beenden: Mikrofon aus, letzten Satz abschließen lassen, dann aufräumen.
   function finish(s) {
-    if (s.done) return;
+    if (!s || s.done) return;
+    log("Stopp geklickt", s.provider || "(noch nicht verbunden)", "live=" + !!s.live);
     s.done = true;
     if (current === s) current = null;
     s.onLevel(0);
@@ -321,6 +350,7 @@
 
   function fail(s, code) {
     if (s.cleaned) return;
+    log("Fehler:", code);
     setState(s, "error", code);
     cleanup(s, true);
   }
@@ -332,8 +362,8 @@
     s.flushed = true;
     if (current === s) current = null;
     stopMic(s);
-    try { s.ctx.close(); } catch (e) {}
     try { s.ws && s.ws.readyState <= 1 && s.ws.close(); } catch (e) {}
+    log("Aufnahme beendet", s.provider || "-", keepState ? "(Fehler)" : "");
     sessions.delete(s);
     s.onLevel(0);
     if (!keepState) setState(s, "idle");
