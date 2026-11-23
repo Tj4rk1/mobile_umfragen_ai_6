@@ -1,4 +1,5 @@
-// Spracheingabe in Echtzeit für Freitext-Felder (AssemblyAI Streaming, EU-Server).
+// Spracheingabe in Echtzeit für Freitext-Felder.
+// Anbieter: ElevenLabs Scribe v3 Live (Standard) und AssemblyAI Universal Streaming (EU, Fallback).
 //
 // Ablauf pro Aufnahme (eine Session pro Feld):
 //   Klick → AudioContext (synchron, wegen Autoplay-Regeln) → Mikrofon → Audio wird SOFORT
@@ -8,10 +9,76 @@
 // Sessions sind unabhängig: Ein neues Feld startet sofort, das alte schließt im Hintergrund ab.
 // Deutsch und Englisch werden automatisch erkannt (auch gemischt).
 (function () {
-  const WS_URL = "wss://streaming.eu.assemblyai.com/v3/ws";
-  const SPEECH_MODEL = "universal-3-6-pro";
+  // Reihenfolge der Versuche: Standard, Fallback, dann abwechselnd mit Wartezeit (Audio bleibt gepuffert).
+  const ATTEMPT_DELAYS = [0, 0, 1500, 3000, 5000, 8000, 12000];
+  const AVOID_MS = 60000; // nach einer Ablehnung den Anbieter 60 s lang zuerst überspringen
+  const ELEVEN_RATES = [8000, 16000, 22050, 24000, 44100, 48000];
+
+  function b64(buf) {
+    const bytes = new Uint8Array(buf);
+    let bin = "";
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(bin);
+  }
+
+  const avoid = (name) => { try { sessionStorage.setItem("stt-avoid-" + name, String(Date.now() + AVOID_MS)); } catch (e) {} };
+  const avoided = (name) => { try { return Number(sessionStorage.getItem("stt-avoid-" + name) || 0) > Date.now(); } catch (e) { return false; } };
+
+  // ── Anbieter-Adapter ────────────────────────────────────────
+  const PROVIDERS = {
+    eleven: {
+      ok: (rate) => ELEVEN_RATES.includes(rate),
+      url: (token, rate) => "wss://api.elevenlabs.io/v1/speech-to-text/realtime?" + new URLSearchParams({ token, model_id: "scribe_v3_live", audio_format: "pcm_" + rate, commit_strategy: "vad" }),
+      binary: false,
+      send: (ws, pcm, rate, commit) => ws.send(JSON.stringify({ message_type: "input_audio_chunk", audio_base_64: b64(pcm), commit: !!commit, sample_rate: rate })),
+      // liefert "begin" | "text" | "fail" | null
+      handle(s, m) {
+        if (m.message_type === "session_started") return "begin";
+        if (m.message_type === "partial_transcript") { if (m.text || !s.el.partial) s.el.partial = m.text || ""; return "text"; }
+        if (m.message_type === "committed_transcript") {
+          if (m.text) s.el.committed.push(m.text);
+          s.el.partial = "";
+          if (s.ending) setTimeout(() => closeWs(s), 50); // letzter Satz da → fertig
+          return "text";
+        }
+        if (m.message_type && m.message_type !== "warning" && /error|exceeded|limit|throttled|overflow|exhausted|terms|invalid/.test(m.message_type)) return "fail";
+        return null;
+      },
+      text: (s) => [...s.el.committed, s.el.partial].filter(Boolean).join(" "),
+      end(s) {
+        const rate = s.ctx.sampleRate;
+        try { this.send(s.ws, new Int16Array(Math.round(rate / 10)).buffer, rate, true); } catch (e) {}
+        setTimeout(() => closeWs(s), 2500); // falls kein Commit mehr kommt
+      },
+    },
+    assembly: {
+      ok: (rate) => rate >= 8000 && rate <= 96000,
+      url: (token, rate) => "wss://streaming.eu.assemblyai.com/v3/ws?" + new URLSearchParams({ token, sample_rate: String(rate), encoding: "pcm_s16le", speech_model: "universal-3-6-pro" }),
+      binary: true,
+      send: (ws, pcm) => ws.send(pcm),
+      handle(s, m) {
+        if (m.type === "Begin") return "begin";
+        if (m.type === "Turn") { const t = (m.end_of_turn && m.utterance) || m.transcript || ""; if (t) s.turns.set(m.turn_order, t); return "text"; }
+        if (m.type === "Termination") { setTimeout(() => closeWs(s), 0); return null; }
+        if (m.type === "Error") return "fail";
+        return null;
+      },
+      text: (s) => [...s.turns.keys()].sort((a, b) => a - b).map((k) => s.turns.get(k)).filter(Boolean).join(" "),
+      end(s) {
+        try { s.ws.send(JSON.stringify({ type: "ForceEndpoint" })); } catch (e) {}
+        setTimeout(() => { try { s.ws.readyState === 1 && s.ws.send(JSON.stringify({ type: "Terminate" })); } catch (e) {} }, 400);
+      },
+    },
+  };
+
+  function plan(rate) {
+    const order = ["eleven", "assembly"].filter((n) => PROVIDERS[n].ok(rate));
+    order.sort((a, b) => avoided(a) - avoided(b)); // gemiedene Anbieter nach hinten
+    return ATTEMPT_DELAYS.map((delay, i) => ({ provider: order[i % order.length], delay }));
+  }
+
+  const fetchTokens = () => fetch("/api/stt-token", { method: "POST" }).then((r) => (r.ok ? r.json() : Promise.reject(new Error("token"))));
   const MAX_BUFFER_CHUNKS = 600; // bis ~60 s Audio puffern, falls die Verbindung länger braucht
-  const RETRY_DELAYS = [1500, 3000, 5000, 8000, 12000, 15000]; // bei „Too many concurrent sessions“ (Limit neue Sessions/Minute)
 
   // AudioWorklet: Float32 → Int16 in ~100-ms-Blöcken, plus Pegel für die Anzeige
   const WORKLET = `
@@ -68,7 +135,7 @@
     const s = {
       ctx, onText, onState, onLevel: onLevel || (() => {}),
       base: baseText && baseText.trim() ? baseText.replace(/\s+$/, "") + " " : "",
-      turns: new Map(), queue: [], ws: null, stream: null, nodes: [],
+      turns: new Map(), el: { committed: [], partial: "" }, queue: [], ws: null, stream: null, nodes: [], provider: null,
       state: "starting", done: false,
     };
     sessions.add(s);
@@ -84,7 +151,7 @@
   }
 
   async function run(s) {
-    const tokenP = fetch("/api/stt-token", { method: "POST" }).then((r) => (r.ok ? r.json() : Promise.reject(new Error("token"))));
+    const tokenP = fetchTokens();
     tokenP.catch(() => {});
 
     // 1) Mikrofon öffnen und SOFORT aufnehmen (Puffer), damit kein Wort verloren geht
@@ -105,55 +172,71 @@
     if (!s.done) setState(s, "recording");
 
     // 2) Parallel mit dem Server verbinden (bei Ablehnung im Hintergrund erneut versuchen, Audio wird gepuffert)
+    s.plan = plan(s.ctx.sampleRate);
     connect(s, tokenP, 0);
   }
 
   async function connect(s, tokenP, attempt) {
     if (s.cleaned) return;
+    const { provider: name } = s.plan[attempt];
+    const P = PROVIDERS[name];
     let token;
     try {
-      token = (await (tokenP || fetch("/api/stt-token", { method: "POST" }).then((r) => (r.ok ? r.json() : Promise.reject(new Error("token")))))).token;
+      const tokens = await (tokenP || fetchTokens());
+      token = tokens[name];
+      if (!token) throw new Error("no token");
     } catch (err) {
-      return retryOr(s, attempt, "token");
+      return next(s, attempt, "token", name);
     }
     if (s.cleaned) return;
-    const params = new URLSearchParams({ token, sample_rate: String(s.ctx.sampleRate), encoding: "pcm_s16le", speech_model: SPEECH_MODEL });
-    const ws = new WebSocket(`${WS_URL}?${params}`);
-    ws.binaryType = "arraybuffer";
+    const ws = new WebSocket(P.url(token, s.ctx.sampleRate));
+    if (P.binary) ws.binaryType = "arraybuffer";
     s.ws = ws;
+    s.provider = name;
+    s.P = P;
     let begun = false;
+    let failed = false;
     ws.onmessage = (e) => {
+      if (s.ws !== ws) return;
       let m;
       try { m = JSON.parse(e.data); } catch (err) { return; }
-      if (m.type === "Begin") {
+      const r = P.handle(s, m);
+      if (r === "begin") {
         begun = true;
-        for (const chunk of s.queue) ws.send(chunk);
+        for (const chunk of s.queue) P.send(ws, chunk, s.ctx.sampleRate);
         s.queue = [];
         s.live = true;
         if (s.flushed) endStream(s); // schon beendet, während die Verbindung aufgebaut wurde
-      } else if (m.type === "Turn") {
-        const text = (m.end_of_turn && m.utterance) || m.transcript || "";
-        if (text) s.turns.set(m.turn_order, text);
+      } else if (r === "text") {
         emit(s);
-      } else if (m.type === "Termination") {
-        cleanup(s);
+      } else if (r === "fail" && !begun) {
+        failed = true;
+        try { ws.close(); } catch (err) {}
       }
     };
     ws.onerror = () => {};
     ws.onclose = (e) => {
       if (s.cleaned || s.ws !== ws) return;
       if (begun && s.done) return cleanup(s);
-      if (!begun) return retryOr(s, attempt, e.code === 1008 ? "busy" : "connection"); // abgelehnt, bevor es losging
+      if (!begun || failed) return next(s, attempt, e.code === 1008 ? "busy" : "connection", name); // abgelehnt → anderer Anbieter
       fail(s, "connection");
     };
   }
 
-  function retryOr(s, attempt, code) {
+  function next(s, attempt, code, name) {
     if (s.cleaned) return;
     s.ws = null;
-    if (attempt >= RETRY_DELAYS.length) return fail(s, code);
+    s.live = false;
+    avoid(name);
+    if (attempt + 1 >= s.plan.length) return fail(s, code);
     if (s.flushed && !s.queue.length) return cleanup(s); // nichts mehr zu übertragen
-    setTimeout(() => connect(s, null, attempt + 1), RETRY_DELAYS[attempt]);
+    setTimeout(() => connect(s, null, attempt + 1), s.plan[attempt + 1].delay);
+  }
+
+  function closeWs(s) {
+    if (s.cleaned) return;
+    try { s.ws && s.ws.readyState <= 1 && s.ws.close(); } catch (e) {}
+    cleanup(s);
   }
 
   async function capture(s) {
@@ -165,7 +248,7 @@
     const onChunk = ({ pcm, level }) => {
       if (s.flushed) return;
       s.onLevel(Math.min(1, level * 2.2));
-      if (s.ws && s.ws.readyState === 1 && !s.queue.length && s.live) s.ws.send(pcm);
+      if (s.ws && s.ws.readyState === 1 && !s.queue.length && s.live) s.P.send(s.ws, pcm, ctx.sampleRate);
       else if (s.queue.length < MAX_BUFFER_CHUNKS) s.queue.push(pcm);
     };
     let node;
@@ -186,7 +269,7 @@
   }
 
   function emit(s) {
-    const spoken = [...s.turns.keys()].sort((a, b) => a - b).map((k) => s.turns.get(k)).filter(Boolean).join(" ");
+    const spoken = s.P ? s.P.text(s) : "";
     try { s.onText(s.base + spoken); } catch (e) {}
   }
 
@@ -210,8 +293,7 @@
   function endStream(s) {
     if (s.ending) return;
     s.ending = true;
-    try { s.ws.send(JSON.stringify({ type: "ForceEndpoint" })); } catch (e) {}
-    setTimeout(() => { try { s.ws.readyState === 1 && s.ws.send(JSON.stringify({ type: "Terminate" })); } catch (e) {} }, 400);
+    s.P.end(s);
   }
 
   function stopMic(s) {
@@ -252,5 +334,5 @@
     });
   }
 
-  window.Voice = { start, finish, stopAll, supported, current: () => current, busy: () => sessions.size > 0 };
+  window.Voice = { start, finish, stopAll, supported, current: () => current, busy: () => sessions.size > 0, provider: (s) => s && s.provider };
 })();

@@ -34,6 +34,9 @@ Teil des Uni-Projekts „Interdisziplinäres Projekt“ (Kolsetu / Elba, Markenw
 
 ## Spracheingabe (Mikrofon in allen Freitext-Feldern)
 
+- Anbieter: **ElevenLabs Scribe v3 Live** (Standard, `scribe_v3_live`, Sprache automatisch) und **AssemblyAI** (EU, Fallback). `api/stt-token.js` holt beide Tokens parallel (Env: `ELEVENLABS_API_KEY`, `ASSEMBLYAI_API_KEY`). `voice.js` probiert ElevenLabs → AssemblyAI → abwechselnd mit Wartezeit; ein abgelehnter Anbieter wird 60 s lang übersprungen (sessionStorage `stt-avoid-*`). Audio bleibt währenddessen gepuffert.
+- ElevenLabs-Key ist auf Speech to Text beschränkt (kein `user_read`), Verbrauch daher nur im ElevenLabs-Dashboard sichtbar. EU-Residency-Host funktioniert mit diesem Account nicht, daher `api.elevenlabs.io`.
+
 - `app/voice.js`: Mikrofon → AudioWorklet (PCM16) → WebSocket `wss://streaming.eu.assemblyai.com/v3/ws`, Modell `universal-3-6-pro` (DE + EN automatisch, auch gemischt). Text erscheint live im Feld.
 - `api/stt-token.js`: holt einen kurzlebigen Streaming-Token (EU, 60 s zum Verbinden, max. 10 min). Nur mit Origin der eigenen Domain. Der Key steht ausschließlich in der Vercel-Umgebungsvariable `ASSEMBLYAI_API_KEY`, nie im Code.
 - Mic-Button in jedem Textfeld (`case "text"`) und in „Andere, und zwar …“ (`optionButtons`) über `micHtml`; nicht im E-Mail-Feld; Aufnahme stoppt automatisch beim Seitenwechsel (`render`).

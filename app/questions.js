@@ -67,12 +67,14 @@
         voice: {
           title: T("Spracheingabe", "Voice input"),
           text: T(
-            "Wenn Sie das Mikrofon nutzen, wird Ihre Sprache live über den Dienst AssemblyAI (Server in der EU) in Text umgewandelt. Die Aufnahme selbst wird nicht gespeichert, nur der Text landet in Ihrer Antwort, und Sie können ihn vor dem Weiterklicken jederzeit korrigieren.",
-            "If you use the microphone, your speech is converted to text live by the service AssemblyAI (servers in the EU). The recording itself is not stored; only the text ends up in your answer, and you can edit it at any time before moving on."
+            "Wenn Sie das Mikrofon nutzen, wird Ihre Sprache live über den Dienst ElevenLabs in Text umgewandelt. Ist ElevenLabs gerade nicht erreichbar, übernimmt automatisch AssemblyAI (Server in der EU). Wir speichern die Aufnahme nicht, nur der Text landet in Ihrer Antwort, und Sie können ihn vor dem Weiterklicken jederzeit korrigieren.",
+            "If you use the microphone, your speech is converted to text live by the service ElevenLabs. If ElevenLabs is unavailable, AssemblyAI (servers in the EU) takes over automatically. We don't store the recording; only the text ends up in your answer, and you can edit it at any time before moving on."
           ),
           links: [
-            [T("Datenschutzerklärung von AssemblyAI", "AssemblyAI privacy policy"), "https://www.assemblyai.com/legal/privacy-policy"],
-            [T("Nutzungsbedingungen", "Terms of service"), "https://www.assemblyai.com/legal/terms-of-service"],
+            [T("Datenschutz ElevenLabs", "ElevenLabs privacy policy"), "https://elevenlabs.io/privacy-policy"],
+            [T("Nutzungsbedingungen ElevenLabs", "ElevenLabs terms"), "https://elevenlabs.io/terms-of-use"],
+            [T("Datenschutz AssemblyAI", "AssemblyAI privacy policy"), "https://www.assemblyai.com/legal/privacy-policy"],
+            [T("Nutzungsbedingungen AssemblyAI", "AssemblyAI terms"), "https://www.assemblyai.com/legal/terms-of-service"],
           ],
         },
         text: T(
