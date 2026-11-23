@@ -64,17 +64,18 @@
       ],
       privacy: {
         title: T("Datenschutz", "Privacy"),
+        summary: T("Anonym: Wir speichern nur Ihre Antworten.", "Anonymous: we only store your answers."),
         voice: {
           title: T("Spracheingabe", "Voice input"),
           text: T(
-            "Wenn Sie das Mikrofon nutzen, wird Ihre Sprache live über den Dienst ElevenLabs in Text umgewandelt. Ist ElevenLabs gerade nicht erreichbar, übernimmt automatisch AssemblyAI (Server in der EU). Wir speichern die Aufnahme nicht, nur der Text landet in Ihrer Antwort, und Sie können ihn vor dem Weiterklicken jederzeit korrigieren.",
-            "If you use the microphone, your speech is converted to text live by the service ElevenLabs. If ElevenLabs is unavailable, AssemblyAI (servers in the EU) takes over automatically. We don't store the recording; only the text ends up in your answer, and you can edit it at any time before moving on."
+            "Wenn Sie das Mikrofon nutzen, wird Ihre Sprache live über den Dienst AssemblyAI (Server in der EU) in Text umgewandelt. Ist AssemblyAI gerade nicht erreichbar, übernimmt automatisch ElevenLabs. Wir speichern die Aufnahme nicht, nur der Text landet in Ihrer Antwort, und Sie können ihn vor dem Weiterklicken jederzeit korrigieren.",
+            "If you use the microphone, your speech is converted to text live by the service AssemblyAI (servers in the EU). If AssemblyAI is unavailable, ElevenLabs takes over automatically. We don't store the recording; only the text ends up in your answer, and you can edit it at any time before moving on."
           ),
           links: [
-            [T("Datenschutz ElevenLabs", "ElevenLabs privacy policy"), "https://elevenlabs.io/privacy-policy"],
-            [T("Nutzungsbedingungen ElevenLabs", "ElevenLabs terms"), "https://elevenlabs.io/terms-of-use"],
             [T("Datenschutz AssemblyAI", "AssemblyAI privacy policy"), "https://www.assemblyai.com/legal/privacy-policy"],
             [T("Nutzungsbedingungen AssemblyAI", "AssemblyAI terms"), "https://www.assemblyai.com/legal/terms-of-service"],
+            [T("Datenschutz ElevenLabs", "ElevenLabs privacy policy"), "https://elevenlabs.io/privacy-policy"],
+            [T("Nutzungsbedingungen ElevenLabs", "ElevenLabs terms"), "https://elevenlabs.io/terms-of-use"],
           ],
         },
         text: T(
@@ -83,10 +84,10 @@
         ),
       },
       voice: {
-        title: T("Gerne frei heraus erzählen", "Feel free to just talk"),
+        title: T("Gerne einsprechen", "Feel free to talk"),
         text: T(
-          "Am meisten helfen uns freie, ungefilterte Antworten. Deshalb können Sie jede Freitext-Antwort auch einsprechen: einfach auf das Mikrofon im Antwortfeld klicken. Freiwillig, Tippen geht genauso.",
-          "Open, unfiltered answers help us most. That's why you can also dictate any free-text answer: just click the microphone in the answer field. Optional, typing works just as well."
+          "Freie, ungefilterte Antworten helfen uns am meisten. Jede Freitext-Antwort können Sie auch per Mikrofon geben.",
+          "Open, unfiltered answers help us most. You can also dictate any free-text answer via the microphone."
         ),
       },
       questions: [

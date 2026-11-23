@@ -1,5 +1,5 @@
 // Spracheingabe in Echtzeit für Freitext-Felder.
-// Anbieter: ElevenLabs Scribe v3 Live (Standard) und AssemblyAI Universal Streaming (EU, Fallback).
+// Anbieter: AssemblyAI Universal Streaming (EU, Standard) und ElevenLabs Scribe v3 Live (Fallback).
 //
 // Ablauf pro Aufnahme (eine Session pro Feld):
 //   Klick → AudioContext (synchron, wegen Autoplay-Regeln) → Mikrofon → Audio wird SOFORT
@@ -72,7 +72,7 @@
   };
 
   function plan(rate) {
-    const order = ["eleven", "assembly"].filter((n) => PROVIDERS[n].ok(rate));
+    const order = ["assembly", "eleven"].filter((n) => PROVIDERS[n].ok(rate));
     order.sort((a, b) => avoided(a) - avoided(b)); // gemiedene Anbieter nach hinten
     return ATTEMPT_DELAYS.map((delay, i) => ({ provider: order[i % order.length], delay }));
   }

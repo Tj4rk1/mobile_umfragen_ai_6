@@ -202,7 +202,7 @@ input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; border-radius
 .consent[aria-checked="true"] .box::after { content: ""; width: 9px; height: 5px; border-left: 2px solid #fff; border-bottom: 2px solid #fff; transform: rotate(-45deg) translate(1px, -1px); }
 
 /* intro facts */
-.facts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 36px 0 4px; }
+.facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 36px 0 4px; }
 .fact { background: var(--soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px 20px 22px; }
 .fact strong { display: block; font-weight: 500; font-size: 17px; letter-spacing: -.015em; margin-bottom: 6px; }
 .fact span { font-size: 14px; color: var(--muted); }
@@ -469,6 +469,19 @@ table.pt tr.click:hover td { background: var(--bg); }
   .admin-table-wrap { overflow-x: auto; }
 }
 .privacy + .questions { margin-top: 16px; }
+.fact-ic { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); margin-right: 7px; vertical-align: -4px; line-height: 0; }
+.fact-voice strong { line-height: 22px; }
+.fact-ic svg { width: 14px; height: 14px; }
+details.privacy { padding: 0; }
+details.privacy summary { list-style: none; cursor: pointer; display: flex; align-items: baseline; gap: 10px; padding: 14px 20px; flex-wrap: wrap; }
+details.privacy summary::-webkit-details-marker { display: none; }
+details.privacy summary strong { display: inline; margin: 0; }
+.privacy-sum { font-size: 14px; color: var(--ink-2); flex: 1; min-width: 180px; }
+.privacy-more { font-size: 13px; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-2); }
+.privacy-more::after { content: " ▾"; text-decoration: none; display: inline-block; transition: transform .15s; }
+details.privacy[open] .privacy-more::after { transform: rotate(180deg); }
+details.privacy summary:hover .privacy-more { color: var(--ink); }
+.privacy-body { padding: 0 20px 16px; }
 .privacy-sub { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
 .voice-box { display: flex; gap: 14px; align-items: flex-start; }
 .voice-ic { flex: none; width: 36px; height: 36px; border-radius: 999px; display: grid; place-items: center; background: var(--soft); border: 1px solid var(--line); color: var(--ink); }

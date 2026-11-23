@@ -1,7 +1,7 @@
 // Spracheingabe (Echtzeit) für Freitext-Fragen: gibt kurzlebige Tokens für beide Anbieter aus.
 //
-//   ElevenLabs Scribe v3 Live (Standard)   – Key: ELEVENLABS_API_KEY  (Single-Use-Token, 15 min gültig)
-//   AssemblyAI Universal Streaming (EU)    – Key: ASSEMBLYAI_API_KEY  (60 s zum Verbinden, max. 10 min)
+//   AssemblyAI Universal Streaming (EU, Standard) – Key: ASSEMBLYAI_API_KEY  (60 s zum Verbinden, max. 10 min)
+//   ElevenLabs Scribe v3 Live (Fallback)          – Key: ELEVENLABS_API_KEY  (Single-Use-Token, 15 min gültig)
 //
 // Beide Tokens werden parallel geholt, damit der Browser bei einer Ablehnung ohne weitere
 // Wartezeit auf den anderen Anbieter wechseln kann. Die API-Keys verlassen nie den Server.

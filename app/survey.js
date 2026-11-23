@@ -11,7 +11,7 @@
   const UI = {
     de: {
       next: "Weiter", back: "Zurück", submit: "Absenden", start: "Los geht’s",
-      required: "Pflicht", optional: "freiwillig", answerThis: "Bitte beantworten Sie diese Frage.", emailInvalid: "Bitte eine gültige E-Mail-Adresse angeben.",
+      required: "Pflicht", optional: "freiwillig", details: "Details", answerThis: "Bitte beantworten Sie diese Frage.", emailInvalid: "Bitte eine gültige E-Mail-Adresse angeben.",
       other: "Andere, und zwar …", otherPh: "Bitte kurz angeben", maxNote: (n, m) => `${n} von max. ${m} gewählt`, unknown: "Weiß ich nicht",
       preview: "Vorschau · speichert nicht", offline: "Offline",
       save: { pending: "Speichert …", error: "Nicht gespeichert", ok: "Gespeichert", idle: "Automatisch gespeichert" },
@@ -31,7 +31,7 @@
     },
     en: {
       next: "Next", back: "Back", submit: "Submit", start: "Let’s start",
-      required: "Required", optional: "optional", answerThis: "Please answer this question.", emailInvalid: "Please enter a valid email address.",
+      required: "Required", optional: "optional", details: "Details", answerThis: "Please answer this question.", emailInvalid: "Please enter a valid email address.",
       other: "Other, namely …", otherPh: "Please specify", maxNote: (n, m) => `${n} of max. ${m} selected`, unknown: "I don't know",
       preview: "Preview · not saved", offline: "Offline",
       save: { pending: "Saving …", error: "Not saved", ok: "Saved", idle: "Saved automatically" },
@@ -722,10 +722,12 @@
       <div class="eyebrow">${esc(t(s.eyebrow))}</div>
       <h1 class="headline">${esc(t(s.title))}</h1>
       <p class="lead">${esc(t(s.lead))}</p>
-      <div class="facts">${s.facts.map(([ti, d]) => `<div class="fact"><strong>${esc(t(ti))}</strong><span>${esc(t(d))}</span></div>`).join("")}</div>
-      ${s.voice ? `<div class="privacy voice-box"><div class="voice-ic">${MIC_SVG}</div><div><strong>${esc(t(s.voice.title))}</strong><p>${esc(t(s.voice.text))}</p></div></div>` : ""}
-      ${s.privacy ? `<div class="privacy"><strong>${esc(t(s.privacy.title))}</strong><p>${esc(t(s.privacy.text))}</p>${s.privacy.voice ? `<div class="privacy-sub"><strong>${esc(t(s.privacy.voice.title))}</strong><p>${esc(t(s.privacy.voice.text))}</p>
-        <p class="voice-links">${s.privacy.voice.links.map(([l, href]) => `<a href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(t(l))} ↗</a>`).join("")}</p></div>` : ""}</div>` : ""}
+      <div class="facts">${s.facts.map(([ti, d]) => `<div class="fact"><strong>${esc(t(ti))}</strong><span>${esc(t(d))}</span></div>`).join("")}${s.voice ? `<div class="fact fact-voice"><strong><span class="fact-ic">${MIC_SVG}</span>${esc(t(s.voice.title))}</strong><span>${esc(t(s.voice.text))}</span></div>` : ""}</div>
+      ${s.privacy ? `<details class="privacy">
+        <summary><strong>${esc(t(s.privacy.title))}</strong><span class="privacy-sum">${esc(t(s.privacy.summary))}</span><span class="privacy-more">${esc(u().details)}</span></summary>
+        <div class="privacy-body"><p>${esc(t(s.privacy.text))}</p>${s.privacy.voice ? `<div class="privacy-sub"><strong>${esc(t(s.privacy.voice.title))}</strong><p>${esc(t(s.privacy.voice.text))}</p>
+        <p class="voice-links">${s.privacy.voice.links.map(([l, href]) => `<a href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(t(l))} ↗</a>`).join("")}</p></div>` : ""}</div>
+      </details>` : ""}
       ${questionsHtml(s)}
       ${!db && !PREVIEW ? `<div class="notice">${esc(u().dbDown)}</div>` : ""}`;
   }

@@ -15,7 +15,7 @@ Teil des Uni-Projekts „Interdisziplinäres Projekt“ (Kolsetu / Elba, Markenw
 - Gespeichert wird der deutsche Wortlaut der Optionen. Optionstexte umbenennen oder `key` ändern trennt neue von alten Antworten in der Auswertung, das dem Nutzer sagen.
 - Alle Fragen sind Pflicht: wird am Ende von `questions.js` automatisch gesetzt. Einzige Ausnahme ist die Kontakt-E-Mail (freiwillig, Anonymität); sie bekommt das Badge „freiwillig“.
 - Bei Mehrfachauswahl (`type: "multi"`) ist „Weiß ich nicht“ (`DONT_KNOW`) exklusiv: Auswahl löscht die anderen Antworten (Logik in `app/survey.js`, Klick-Handler).
-- Intro-Kacheln (`facts`) liegen im CSS-Grid `.facts` in `app/app.css`; Spaltenzahl an die Anzahl der Kacheln anpassen (aktuell 2).
+- Intro: 3 Kacheln (`facts` + `voice` als Mikrofon-Kachel, Grid `.facts` in `app/app.css`), darunter Datenschutz als aufklappbares `<details>` (Kurzfassung `privacy.summary`, Rest inkl. Spracheingabe-Anbieter beim Aufklappen).
 
 ## Prüfen
 
@@ -34,7 +34,7 @@ Teil des Uni-Projekts „Interdisziplinäres Projekt“ (Kolsetu / Elba, Markenw
 
 ## Spracheingabe (Mikrofon in allen Freitext-Feldern)
 
-- Anbieter: **ElevenLabs Scribe v3 Live** (Standard, `scribe_v3_live`, Sprache automatisch) und **AssemblyAI** (EU, Fallback). `api/stt-token.js` holt beide Tokens parallel (Env: `ELEVENLABS_API_KEY`, `ASSEMBLYAI_API_KEY`). `voice.js` probiert ElevenLabs → AssemblyAI → abwechselnd mit Wartezeit; ein abgelehnter Anbieter wird 60 s lang übersprungen (sessionStorage `stt-avoid-*`). Audio bleibt währenddessen gepuffert.
+- Anbieter: **AssemblyAI** (Standard, EU-Server, `universal-3-6-pro`) und **ElevenLabs Scribe v3 Live** (Fallback, `scribe_v3_live`); beide erkennen DE/EN automatisch. Reihenfolge in `plan()` in `voice.js`. `api/stt-token.js` holt beide Tokens parallel (Env: `ELEVENLABS_API_KEY`, `ASSEMBLYAI_API_KEY`). `voice.js` probiert AssemblyAI → ElevenLabs → abwechselnd mit Wartezeit; ein abgelehnter Anbieter wird 60 s lang übersprungen (sessionStorage `stt-avoid-*`). Audio bleibt währenddessen gepuffert.
 - ElevenLabs-Key ist auf Speech to Text beschränkt (kein `user_read`), Verbrauch daher nur im ElevenLabs-Dashboard sichtbar. EU-Residency-Host funktioniert mit diesem Account nicht, daher `api.elevenlabs.io`.
 
 - `app/voice.js`: Mikrofon → AudioWorklet (PCM16) → WebSocket `wss://streaming.eu.assemblyai.com/v3/ws`, Modell `universal-3-6-pro` (DE + EN automatisch, auch gemischt). Text erscheint live im Feld.
