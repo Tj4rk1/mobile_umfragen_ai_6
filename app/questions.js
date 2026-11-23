@@ -280,6 +280,10 @@
       section: "website",
       title: T("Was ist hängen geblieben?", "What stuck with you?"),
       lead: T("Bitte antworten Sie spontan, ohne nachzuschauen.", "Please answer spontaneously, without looking it up."),
+      note: T(
+        "Kein Problem, wenn etwas unklar geblieben ist: Schreiben Sie es einfach genau so hin. Uns interessiert, wie die Website auf Sie wirkt und was beim Produkt hängen bleibt, nicht, ob Sie alles richtig verstanden haben.",
+        "No problem if something remained unclear: just write it down exactly like that. We're interested in how the website comes across and what sticks about the product, not whether you understood everything correctly."
+      ),
       questions: [
         {
           key: "fivesec_angebot",
@@ -297,6 +301,34 @@
           rows: 2,
           label: T("Was ist Ihnen sonst noch in Erinnerung geblieben?", "What else do you remember?"),
           placeholder: T("Wörter, Bilder, Farben, Gefühl … (optional)", "Words, images, colours, feelings … (optional)"),
+        },
+        {
+          key: "elba_satz",
+          type: "text",
+          rows: 2,
+          label: T("Was macht Elba konkret? Beschreiben Sie es in einem Satz.", "What exactly does Elba do? Describe it in one sentence."),
+        },
+        {
+          key: "elba_aufgaben",
+          type: "text",
+          rows: 2,
+          label: T("Welche Aufgaben könnte Elba in Ihrem Service übernehmen?", "Which tasks could Elba take over in your service?"),
+        },
+        {
+          key: "markenklarheit",
+          ref: "F9",
+          type: "single",
+          label: T("Ist Ihnen klar, was Kolsetu, Elba und die „digitalen Mitarbeiter“ jeweils sind?", "Is it clear to you what Kolsetu, Elba and the “digital employees” each are?"),
+          options: [T("Ja, völlig klar", "Yes, completely"), T("Teilweise", "Partly"), T("Nein", "No")],
+          columns: 3,
+        },
+        {
+          key: "integration_klar",
+          ref: "F10",
+          type: "single",
+          label: T("Wäre Ihnen klar, ob sich das Produkt in Ihre Systeme integrieren lässt?", "Would it be clear whether the product integrates with your systems?"),
+          options: [T("Ja", "Yes"), T("Eher ja", "Rather yes"), T("Eher nein", "Rather no"), T("Nein", "No")],
+          columns: 4,
         },
       ],
     },
@@ -348,42 +380,6 @@
           required: true,
           rows: 4,
           label: T("Welche Fragen bleiben offen, zum Produkt, zur Marke oder zur Funktionsweise?", "What questions remain about the product, the brand or how it works?"),
-        },
-      ],
-    },
-    {
-      id: "w4",
-      section: "website",
-      layout: "website",
-      title: T("Was ist das Produkt?", "What is the product?"),
-      questions: [
-        {
-          key: "elba_satz",
-          type: "text",
-          rows: 2,
-          label: T("Was macht Elba konkret? Beschreiben Sie es in einem Satz.", "What exactly does Elba do? Describe it in one sentence."),
-        },
-        {
-          key: "elba_aufgaben",
-          type: "text",
-          rows: 2,
-          label: T("Welche Aufgaben könnte Elba in Ihrem Service übernehmen?", "Which tasks could Elba take over in your service?"),
-        },
-        {
-          key: "markenklarheit",
-          ref: "F9",
-          type: "single",
-          label: T("Ist Ihnen klar, was Kolsetu, Elba und die „digitalen Mitarbeiter“ jeweils sind?", "Is it clear to you what Kolsetu, Elba and the “digital employees” each are?"),
-          options: [T("Ja, völlig klar", "Yes, completely"), T("Teilweise", "Partly"), T("Nein", "No")],
-          columns: 3,
-        },
-        {
-          key: "integration_klar",
-          ref: "F10",
-          type: "single",
-          label: T("Wäre Ihnen klar, ob sich das Produkt in Ihre Systeme integrieren lässt?", "Would it be clear whether the product integrates with your systems?"),
-          options: [T("Ja", "Yes"), T("Eher ja", "Rather yes"), T("Eher nein", "Rather no"), T("Nein", "No")],
-          columns: 4,
         },
       ],
     },

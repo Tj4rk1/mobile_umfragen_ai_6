@@ -87,6 +87,7 @@ h1.headline {
   margin: 10px 0 18px;
 }
 h1.headline em { font-style: normal; }
+.note { font-size: 14px; line-height: 1.5; color: var(--muted); background: var(--soft); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; max-width: 620px; margin: 12px 0 0; }
 .lead { font-size: 18px; line-height: 1.55; color: var(--ink-2); max-width: 620px; margin: 0 0 8px; }
 
 .task {

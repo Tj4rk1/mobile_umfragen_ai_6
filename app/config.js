@@ -27,7 +27,7 @@ window.STUDY_CONFIG = {
       { code: "cs", label: "Čeština", path: "/cs" },
     ],
     defaultLanguage: "de",
-    exposureSeconds: 25,
+    exposureSeconds: 60,
     // In der Split-Ansicht wird die Seite in dieser Breite gerendert und verkleinert,
     // damit auch neben dem Fragen-Panel das Desktop-Layout zu sehen ist.
     desktopWidth: 1280,

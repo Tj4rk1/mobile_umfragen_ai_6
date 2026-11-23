@@ -24,5 +24,10 @@ Teil des Uni-Projekts „Interdisziplinäres Projekt“ (Kolsetu / Elba, Markenw
 
 ## Website-Test (`startFivesec` in `app/survey.js`)
 
-- Die 25 s (`exposureSeconds` in `app/config.js`) starten erst, wenn die Seite sichtbar ist: iframe-`load`, Schriften fertig, Bilder im sichtbaren Bereich geladen (max. ~10 s Zusatzwartezeit), dann kurze Pause.
+- Die 60 s (`exposureSeconds` in `app/config.js`) starten erst, wenn die Seite sichtbar ist: iframe-`load`, Schriften fertig, Bilder im sichtbaren Bereich geladen (max. ~10 s Zusatzwartezeit), dann kurze Pause.
 - Lädt die Live-Seite nach 30 s nicht, wird auf den Screenshot gewechselt; der Timer startet, wenn das Bild geladen ist. In `meta.fivesec` steht dann `fallback_after_timeout: true`.
+
+## Fallback / Zurückrollen
+
+- Jede Änderung ist ein Git-Commit; zurück mit `git revert <sha>` + Push. Vor größeren Umbauten einen Tag setzen (z. B. `vor-fragen-umbau-2026-11-23`).
+- Vercel behält alte Deployments: im Dashboard unter Deployments → „Instant Rollback“.

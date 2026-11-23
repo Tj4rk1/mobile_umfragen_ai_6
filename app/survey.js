@@ -637,6 +637,7 @@
       <div class="eyebrow">${esc(t(sections.find((x) => x.id === s.section).title))}</div>
       <h1 class="headline">${esc(t(s.title))}</h1>
       ${s.lead ? `<p class="lead">${esc(t(s.lead))}</p>` : ""}
+      ${s.note ? `<p class="note">${esc(t(s.note))}</p>` : ""}
       ${s.task ? `<div class="task">${esc(t(s.task))}</div>` : ""}
       ${questionsHtml(s)}`;
   }
@@ -742,7 +743,7 @@
     let waitingForLoad = false;
     let usedFallback = false;
 
-    // Die 25 Sekunden starten erst, wenn die Seite wirklich sichtbar ist:
+    // Die Anzeigezeit startet erst, wenn die Seite wirklich sichtbar ist:
     // iframe geladen + Schriften fertig + Bilder im sichtbaren Bereich geladen.
     const markLoaded = () => {
       if (loaded) return;
