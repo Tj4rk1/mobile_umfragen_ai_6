@@ -452,3 +452,8 @@ table.pt tr.click:hover td { background: var(--bg); }
   .admin-table-wrap { overflow-x: auto; }
 }
 .privacy + .questions { margin-top: 16px; }
+.voice-box { display: flex; gap: 14px; align-items: flex-start; }
+.voice-ic { flex: none; width: 36px; height: 36px; border-radius: 999px; display: grid; place-items: center; background: var(--soft); border: 1px solid var(--line); color: var(--ink); }
+.voice-links { margin-top: 10px !important; display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.voice-links a { color: var(--ink); font-size: 13.5px; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-2); }
+.voice-links a:hover { text-decoration-color: currentColor; }

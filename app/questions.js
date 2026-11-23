@@ -65,9 +65,20 @@
       privacy: {
         title: T("Datenschutz", "Privacy"),
         text: T(
-          "Die Umfrage ist anonym. Wir speichern keine personenbezogenen Daten wie Ihren Namen oder Ihre E-Mail-Adresse, sondern nur Ihre Antworten. Die einzige Ausnahme: Am Ende können Sie freiwillig eine E-Mail-Adresse angeben, damit wir Ihnen Rückfragen zu Ihren Antworten stellen können. Nur dann, und nur wenn Sie sie dort ausdrücklich eintragen, ist Ihre E-Mail-Adresse mit Ihren Antworten verknüpft. Wenn Sie Antworten per Mikrofon einsprechen, wird Ihre Sprache live über den Dienst AssemblyAI (Server in der EU) in Text umgewandelt. Die Aufnahme wird dabei nicht gespeichert, nur der Text landet in Ihrer Antwort. Bitte nennen Sie in Freitext-Antworten keine Namen von Personen.",
-          "This survey is anonymous. We don't store any personal data such as your name or email address, only your answers. The only exception: at the end you can voluntarily leave an email address so we can ask follow-up questions about your answers. Only then, and only if you explicitly enter it there, is your email address linked to your answers. If you dictate answers via the microphone, your speech is converted to text live by the service AssemblyAI (servers in the EU). The recording itself is not stored; only the text ends up in your answer. Please don't mention names of people in your free-text answers."
+          "Die Umfrage ist anonym. Wir speichern keine personenbezogenen Daten wie Ihren Namen oder Ihre E-Mail-Adresse, sondern nur Ihre Antworten. Die einzige Ausnahme: Am Ende können Sie freiwillig eine E-Mail-Adresse angeben, damit wir Ihnen Rückfragen zu Ihren Antworten stellen können. Nur dann, und nur wenn Sie sie dort ausdrücklich eintragen, ist Ihre E-Mail-Adresse mit Ihren Antworten verknüpft. Bitte nennen Sie in Freitext-Antworten keine Namen von Personen.",
+          "This survey is anonymous. We don't store any personal data such as your name or email address, only your answers. The only exception: at the end you can voluntarily leave an email address so we can ask follow-up questions about your answers. Only then, and only if you explicitly enter it there, is your email address linked to your answers. Please don't mention names of people in your free-text answers."
         ),
+      },
+      voice: {
+        title: T("Gerne frei heraus erzählen", "Feel free to just talk"),
+        text: T(
+          "Am meisten helfen uns Antworten, die so frei und ungefiltert wie möglich sind. Deshalb können Sie jede Freitext-Antwort auch einsprechen: einfach auf das Mikrofon im Antwortfeld klicken. Ihre Sprache wird dann live über den Dienst AssemblyAI (Server in der EU) in Text umgewandelt. Die Aufnahme selbst wird nicht gespeichert, nur der Text landet in Ihrer Antwort, und Sie können ihn vor dem Weiterklicken jederzeit korrigieren. Die Nutzung ist freiwillig, Tippen geht natürlich genauso.",
+          "Answers that are as open and unfiltered as possible help us most. That's why you can also dictate any free-text answer: just click the microphone in the answer field. Your speech is then converted to text live by the service AssemblyAI (servers in the EU). The recording itself is not stored; only the text ends up in your answer, and you can edit it at any time before moving on. Using it is optional, typing works just as well."
+        ),
+        links: [
+          [T("Datenschutzerklärung von AssemblyAI", "AssemblyAI privacy policy"), "https://www.assemblyai.com/legal/privacy-policy"],
+          [T("Nutzungsbedingungen", "Terms of service"), "https://www.assemblyai.com/legal/terms-of-service"],
+        ],
       },
       questions: [
         {
