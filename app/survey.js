@@ -737,17 +737,58 @@
     const frame = stage.querySelector(".fs-frame");
     const countEl = stage.querySelector(".fs-count");
     const t0 = performance.now();
-    let loaded = websiteMode !== "live";
-    let loadedAt = loaded ? t0 : null;
+    let loaded = false;
+    let loadedAt = null;
     let waitingForLoad = false;
+    let usedFallback = false;
+
+    // Die 25 Sekunden starten erst, wenn die Seite wirklich sichtbar ist:
+    // iframe geladen + Schriften fertig + Bilder im sichtbaren Bereich geladen.
+    const markLoaded = () => {
+      if (loaded) return;
+      loaded = true;
+      loadedAt = performance.now();
+      if (waitingForLoad) expose();
+    };
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const withTimeout = (p, ms) => Promise.race([p, wait(ms)]);
+
+    async function settleIframe(iframe) {
+      try {
+        const doc = iframe.contentDocument;
+        if (doc) {
+          await withTimeout(doc.fonts?.ready || Promise.resolve(), 4000);
+          const vh = iframe.clientHeight || window.innerHeight;
+          const imgs = [...doc.images].filter((img) => !img.complete && img.getBoundingClientRect().top < vh);
+          await withTimeout(Promise.all(imgs.map((img) => new Promise((r) => { img.addEventListener("load", r, { once: true }); img.addEventListener("error", r, { once: true }); }))), 6000);
+        }
+      } catch (e) {}
+      // zwei Frames + kurze Pause, damit die Seite auch gemalt ist
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      await wait(300);
+    }
+
+    function watchShot(root) {
+      const img = root.querySelector(".shot img");
+      if (!img || img.complete) return markLoaded();
+      img.addEventListener("load", markLoaded, { once: true });
+      img.addEventListener("error", markLoaded, { once: true });
+    }
+
+    // Lädt die Live-Seite gar nicht, auf den Screenshot ausweichen (Timer startet erst, wenn der da ist).
+    function switchToScreenshot() {
+      if (loaded) return;
+      usedFallback = true;
+      frame.innerHTML = `<div class="shot" id="fs-site"><img src="${esc(W.fallbackImage)}" alt="${esc(u().siteTitle)}"><span class="shot-note">${esc(t(W.fallbackLabel))}</span></div>`;
+      watchShot(frame);
+    }
 
     const iframe = stage.querySelector("iframe");
     if (iframe) {
-      iframe.addEventListener("load", () => {
-        loaded = true;
-        loadedAt = performance.now();
-        if (waitingForLoad) expose();
-      });
+      iframe.addEventListener("load", () => settleIframe(iframe).then(markLoaded), { once: true });
+      fsTimers.push(setTimeout(switchToScreenshot, 30000));
+    } else {
+      watchShot(stage);
     }
 
     let n = W.countdownSeconds;
@@ -761,7 +802,6 @@
       } else {
         waitingForLoad = true;
         countEl.innerHTML = `<div class="fs-msg"><div class="spinner"></div><p>${esc(u().loading)}</p></div>`;
-        fsTimers.push(setTimeout(() => waitingForLoad && expose(), 8000));
       }
     };
 
@@ -798,7 +838,8 @@
           stage.insertAdjacentHTML("beforeend", `<div class="fs-msg"><h2>${esc(u().timeUp)}</h2><p>${esc(u().timeUpSub)}</p></div>`);
           state.fivesecDone = true;
           state.meta.fivesec = {
-            mode: websiteMode,
+            mode: usedFallback ? "screenshot" : websiteMode,
+            fallback_after_timeout: usedFallback,
             lang: siteLang().code,
             loaded_before_show: loaded,
             wait_after_countdown_ms: Math.max(0, Math.round((loadedAt || performance.now()) - t0 - W.countdownSeconds * 1000)),

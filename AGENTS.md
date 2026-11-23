@@ -21,3 +21,8 @@ Teil des Uni-Projekts „Interdisziplinäres Projekt“ (Kolsetu / Elba, Markenw
 
 - `for f in app/*.js; do node --check "$f"; done`
 - Lokal: `node --experimental-detect-module scripts/dev-server.mjs` (http://localhost:4173), Vorschau mit `/?preview=1`, damit nichts in Supabase landet.
+
+## Website-Test (`startFivesec` in `app/survey.js`)
+
+- Die 25 s (`exposureSeconds` in `app/config.js`) starten erst, wenn die Seite sichtbar ist: iframe-`load`, Schriften fertig, Bilder im sichtbaren Bereich geladen (max. ~10 s Zusatzwartezeit), dann kurze Pause.
+- Lädt die Live-Seite nach 30 s nicht, wird auf den Screenshot gewechselt; der Timer startet, wenn das Bild geladen ist. In `meta.fivesec` steht dann `fallback_after_timeout: true`.

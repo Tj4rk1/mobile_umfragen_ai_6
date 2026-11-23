@@ -55,8 +55,8 @@
       eyebrow: T(cfg.study.institution, "Master's project · Macromedia University"),
       title: T("Kundenservice im KI-Zeitalter", "Customer service in the age of AI"),
       lead: T(
-        "Wir sind Masterstudierende und untersuchen gemeinsam mit einem KI-Startup, wie Verantwortliche im Kundenservice KI-Lösungen wahrnehmen und verstehen. Es geht um Markenwahrnehmung.",
-        "We are master's students researching, together with an AI start-up, how customer service leaders perceive and understand AI solutions. This is about brand perception."
+        "Wir sind Masterstudierende und untersuchen gemeinsam mit einem KI-Startup, wie Verantwortliche im Kundenservice KI-Lösungen wahrnehmen und verstehen. Die Studie bezieht sich auf das Thema Markenwahrnehmung und Kommunikation.",
+        "We are master's students researching, together with an AI start-up, how customer service leaders perceive and understand AI solutions. The study focuses on brand perception and communication."
       ),
       facts: [
         [T("ca. " + cfg.study.minutes + " Minuten", "approx. " + cfg.study.minutes + " minutes"), T("Fragen zu Ihrem Alltag, ein Website-Test und Ihre Einschätzung.", "Questions about your work, a website test and your assessment.")],
