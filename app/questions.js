@@ -21,10 +21,12 @@
   const DONT_KNOW = T("Weiß ich nicht", "I don't know");
 
   const AI_USE = [
-    T("Ja, im Regelbetrieb", "Yes, in production"),
-    T("Ja, im Test / Pilot", "Yes, testing / pilot"),
+    T("Ja, im Chat", "Yes, in chat"),
+    T("Ja, per Voice (Telefon)", "Yes, via voice (phone)"),
+    T("Ja, beides", "Yes, both"),
+    T("Im Test / Pilot", "Testing / pilot"),
     T("Nein, aber geplant", "No, but planned"),
-    T("Nein", "No"),
+    T("Nein, gar nicht", "No, not at all"),
     DONT_KNOW,
   ];
 
@@ -53,12 +55,11 @@
       eyebrow: T(cfg.study.institution, "Master's project · Macromedia University"),
       title: T("Kundenservice im KI-Zeitalter", "Customer service in the age of AI"),
       lead: T(
-        "Wir sind Masterstudierende und untersuchen gemeinsam mit einem KI-Startup, wie Verantwortliche im Kundenservice KI-Lösungen wahrnehmen und verstehen. Es geht um Kommunikation, nicht um Verkauf.",
-        "We are master's students researching, together with an AI start-up, how customer service leaders perceive and understand AI solutions. This is about communication, not sales."
+        "Wir sind Masterstudierende und untersuchen gemeinsam mit einem KI-Startup, wie Verantwortliche im Kundenservice KI-Lösungen wahrnehmen und verstehen. Es geht um Markenwahrnehmung.",
+        "We are master's students researching, together with an AI start-up, how customer service leaders perceive and understand AI solutions. This is about brand perception."
       ),
       facts: [
         [T("ca. " + cfg.study.minutes + " Minuten", "approx. " + cfg.study.minutes + " minutes"), T("Fragen zu Ihrem Alltag, ein Website-Test und Ihre Einschätzung.", "Questions about your work, a website test and your assessment.")],
-        [T("Anonym", "Anonymous"), T("Ohne Ihre ausdrückliche Angabe speichern wir keine personenbezogenen Daten.", "Unless you explicitly provide it, we don't store any personal data.")],
         [T("Kritik erwünscht", "Criticism welcome"), T("Es gibt keine falschen Antworten. Gerade kritische Eindrücke helfen uns am meisten.", "There are no wrong answers. Critical impressions help us most.")],
       ],
       privacy: {
@@ -86,7 +87,6 @@
       id: "k1",
       section: "kontext",
       title: T("Zuerst ein paar Worte zu Ihnen.", "First, a little about you."),
-      lead: T("So können wir Ihre Antworten besser einordnen.", "This helps us put your answers into context."),
       questions: [
         {
           key: "rolle",
@@ -163,15 +163,6 @@
           ],
           columns: 3,
         },
-        {
-          key: "standardanteil",
-          ref: "F3",
-          type: "percent",
-          required: true,
-          allowUnknown: true,
-          label: T("Wie viel davon sind Standardanfragen, die sich immer wiederholen?", "How many of these are routine requests that keep coming up?"),
-          hint: T("z. B. „Wann kommt mein Paket?“. Eine grobe Schätzung reicht.", "e.g. “When will my parcel arrive?”. A rough estimate is fine."),
-        },
       ],
     },
     {
@@ -244,7 +235,7 @@
         {
           key: "ki_offenheit",
           type: "grid",
-          label: T("Wie offen sind Sie dafür, wiederkehrende Anfragen von KI erledigen zu lassen?", "How open are you to letting AI handle recurring requests?"),
+          label: T("Wie offen sind Sie dafür, Anfragen von KI erledigen zu lassen?", "How open are you to letting AI handle requests?"),
           scale: OPEN,
           items: [
             { key: "ki_offenheit_chat", label: T("per Chat / Chatbot", "via chat / chatbot") },
@@ -252,16 +243,9 @@
           ],
         },
         {
-          key: "ki_einsatz_chat",
+          key: "ki_einsatz",
           type: "single",
-          label: T("Setzen Sie bereits KI im Chat ein?", "Do you already use AI in chat?"),
-          options: AI_USE,
-          columns: 3,
-        },
-        {
-          key: "ki_einsatz_voice",
-          type: "single",
-          label: T("Setzen Sie bereits KI am Telefon ein?", "Do you already use AI on the phone?"),
+          label: T("Setzen Sie bereits KI im Kundensupport ein?", "Do you already use AI in customer support?"),
           options: AI_USE,
           columns: 3,
         },

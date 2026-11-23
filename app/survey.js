@@ -894,10 +894,18 @@
         const q = step().questions.find((x) => x.key === qEl.dataset.key);
         const v = b.dataset.opt;
         if (q.type === "multi") {
-          const list = Array.isArray(a[q.key]) ? a[q.key].slice() : [];
+          // „Weiß ich nicht“ schließt alle anderen Antworten aus (und umgekehrt).
+          const UNKNOWN = "Weiß ich nicht";
+          let list = Array.isArray(a[q.key]) ? a[q.key].slice() : [];
           const i = list.indexOf(v);
           if (i >= 0) list.splice(i, 1);
-          else if (!q.max || list.length < q.max) list.push(v);
+          else if (v === UNKNOWN) {
+            list = [UNKNOWN];
+            delete a[q.key + "__andere"];
+          } else {
+            list = list.filter((x) => x !== UNKNOWN);
+            if (!q.max || list.length < q.max) list.push(v);
+          }
           a[q.key] = list;
         } else {
           a[q.key] = a[q.key] === v ? undefined : v;

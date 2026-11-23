@@ -166,7 +166,7 @@ input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; border-radius
 .consent[aria-checked="true"] .box::after { content: ""; width: 9px; height: 5px; border-left: 2px solid #fff; border-bottom: 2px solid #fff; transform: rotate(-45deg) translate(1px, -1px); }
 
 /* intro facts */
-.facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 36px 0 4px; }
+.facts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 36px 0 4px; }
 .fact { background: var(--soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px 20px 22px; }
 .fact strong { display: block; font-weight: 500; font-size: 17px; letter-spacing: -.015em; margin-bottom: 6px; }
 .fact span { font-size: 14px; color: var(--muted); }
