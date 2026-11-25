@@ -21,9 +21,10 @@
   const DONT_KNOW = T("Weiß ich nicht", "I don't know");
 
   const AI_USE = [
+    T("Ja, per E-Mail", "Yes, in email"),
     T("Ja, im Chat", "Yes, in chat"),
     T("Ja, per Voice (Telefon)", "Yes, via voice (phone)"),
-    T("Ja, beides", "Yes, both"),
+    T("Ja, in mehreren Kanälen", "Yes, in several channels"),
     T("Im Test / Pilot", "Testing / pilot"),
     T("Nein, aber geplant", "No, but planned"),
     T("Nein, gar nicht", "No, not at all"),
@@ -150,13 +151,14 @@
     {
       id: "k2",
       section: "kontext",
-      title: T("Wie läuft der Kundenkontakt bei Ihnen ab?", "How does customer contact work for you?"),
+      title: T("Wie läuft der Kundenkontakt in Ihrem Unternehmen ab?", "How does customer contact work in your company?"),
+      lead: T("Gemeint sind hier Kundenservice-Anfragen Ihres gesamten Unternehmens, nicht nur Ihre eigenen.", "This refers to customer service requests across your whole company, not just your own."),
       questions: [
         {
           key: "kanaele",
           ref: "F2",
           type: "multi",
-          label: T("Über welche Kanäle kommen Anfragen herein?", "Through which channels do requests come in?"),
+          label: T("Über welche Kanäle kommen Kundenservice-Anfragen in Ihrem Unternehmen herein?", "Through which channels do customer service requests come into your company?"),
           options: [
             T("Telefon", "Phone"),
             T("E-Mail", "Email"),
@@ -173,7 +175,8 @@
           key: "volumen",
           ref: "F2",
           type: "single",
-          label: T("Wie viele Kundenanfragen gibt es ungefähr pro Jahr?", "Roughly how many customer requests are there per year?"),
+          label: T("Wie viele Kundenservice-Anfragen erhält Ihr Unternehmen ungefähr pro Jahr?", "Roughly how many customer service requests does your company receive per year?"),
+          hint: T("Alle Kanäle zusammen, ohne Vertriebs- bzw. Sales-Anfragen", "All channels combined, excluding sales enquiries"),
           options: [
             T("unter 10.000", "under 10,000"),
             T("10.000 – 50.000", "10,000 – 50,000"),
@@ -189,14 +192,14 @@
     {
       id: "k3",
       section: "kontext",
-      title: T("Wo hakt es, und wie ist der Service aufgestellt?", "Where are the pain points, and how is service set up?"),
+      title: T("Herausforderungen und Aufstellung Ihres Kundenservice", "Challenges and set-up of your customer service"),
       questions: [
         {
           key: "engpaesse",
           ref: "F4",
           type: "multi",
-          label: T("Wo hakt es aktuell am meisten?", "Where are the biggest problems right now?"),
-          hint: T("Mehrfachauswahl möglich", "Select all that apply"),
+          label: T("Wo sehen Sie im Kundenservice Ihres Unternehmens aktuell die größten Herausforderungen?", "Where do you see the biggest challenges in your company's customer service right now?"),
+          hint: T("Intern (Abläufe, Personal, Systeme) wie extern (Erfahrung Ihrer Kundschaft). Mehrfachauswahl möglich", "Internal (processes, staff, systems) as well as external (your customers' experience). Select all that apply"),
           options: [
             T("Lange Wartezeiten", "Long waiting times"),
             T("Zu wenig Personal", "Not enough staff"),
@@ -206,6 +209,7 @@
             T("Uneinheitliche Antwortqualität", "Inconsistent answer quality"),
             T("Kosten pro Kontakt", "Cost per contact"),
             T("Medienbrüche zwischen Systemen", "Gaps between systems"),
+            T("Keine nennenswerten Herausforderungen", "No significant challenges"),
             DONT_KNOW,
           ],
           other: true,
@@ -213,7 +217,7 @@
         {
           key: "outsourcing",
           type: "single",
-          label: T("Ist Ihr Kundenservice ganz oder teilweise an einen Dienstleister ausgelagert?", "Is your customer service fully or partly outsourced to a service provider?"),
+          label: T("Ist der Kundenservice Ihres Unternehmens ganz oder teilweise an einen Dienstleister ausgelagert?", "Is your customer service fully or partly outsourced to a service provider?"),
           options: [T("Ja, komplett", "Yes, fully"), T("Teilweise", "Partly"), T("Nein", "No"), DONT_KNOW],
           columns: 2,
         },
@@ -228,7 +232,7 @@
           key: "tools",
           ref: "F5",
           type: "multi",
-          label: T("Mit welchen Tools bzw. Systemen arbeitet Ihr Service?", "Which tools or systems does your service team use?"),
+          label: T("Mit welchen Tools bzw. Systemen arbeitet der Kundenservice Ihres Unternehmens?", "Which tools or systems does your company's customer service use?"),
           hint: T("z. B. CRM oder Ticketsystem", "e.g. CRM or ticketing system"),
           options: [
             T("Salesforce", "Salesforce"),
@@ -251,14 +255,15 @@
       id: "k4",
       section: "kontext",
       title: T("Und wie stehen Sie zu KI im Service?", "And how do you feel about AI in service?"),
-      lead: T("Wir unterscheiden zwischen KI im Chat und KI am Telefon.", "We distinguish between AI in chat and AI on the phone."),
+      lead: T("Wir unterscheiden zwischen KI per E-Mail, im Chat und am Telefon.", "We distinguish between AI in email, in chat and on the phone."),
       questions: [
         {
           key: "ki_offenheit",
           type: "grid",
-          label: T("Wie offen sind Sie dafür, Anfragen von KI erledigen zu lassen?", "How open are you to letting AI handle requests?"),
+          label: T("Wie offen sind Sie persönlich dafür, Kundenservice-Anfragen von KI bearbeiten zu lassen?", "How open are you personally to letting AI handle customer service requests?"),
           scale: OPEN,
           items: [
+            { key: "ki_offenheit_mail", label: T("per E-Mail", "via email") },
             { key: "ki_offenheit_chat", label: T("per Chat / Chatbot", "via chat / chatbot") },
             { key: "ki_offenheit_voice", label: T("am Telefon (KI-Stimme)", "on the phone (AI voice)") },
           ],
@@ -266,7 +271,7 @@
         {
           key: "ki_einsatz",
           type: "single",
-          label: T("Setzen Sie bereits KI im Kundensupport ein?", "Do you already use AI in customer support?"),
+          label: T("Setzt Ihr Unternehmen bereits KI im Kundenservice ein?", "Does your company already use AI in customer service?"),
           options: AI_USE,
           columns: 3,
         },

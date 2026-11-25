@@ -1052,16 +1052,16 @@
         const q = step().questions.find((x) => x.key === qEl.dataset.key);
         const v = b.dataset.opt;
         if (q.type === "multi") {
-          // „Weiß ich nicht“ schließt alle anderen Antworten aus (und umgekehrt).
-          const UNKNOWN = "Weiß ich nicht";
+          // „Weiß ich nicht“ und „Keine nennenswerten Herausforderungen“ schließen alle anderen Antworten aus (und umgekehrt).
+          const EXCLUSIVE = ["Weiß ich nicht", "Keine nennenswerten Herausforderungen"];
           let list = Array.isArray(a[q.key]) ? a[q.key].slice() : [];
           const i = list.indexOf(v);
           if (i >= 0) list.splice(i, 1);
-          else if (v === UNKNOWN) {
-            list = [UNKNOWN];
+          else if (EXCLUSIVE.includes(v)) {
+            list = [v];
             delete a[q.key + "__andere"];
           } else {
-            list = list.filter((x) => x !== UNKNOWN);
+            list = list.filter((x) => !EXCLUSIVE.includes(x));
             if (!q.max || list.length < q.max) list.push(v);
           }
           a[q.key] = list;
