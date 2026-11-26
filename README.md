@@ -6,7 +6,7 @@ Desktop first, mobil nutzbar. Statisches Frontend auf Vercel, Daten in Supabase 
 | Pfad | Was |
 |---|---|
 | `/` | Umfrage |
-| `/?preview=1` | Vorschau, speichert nichts |
+| `/?preview=1` | Vorschau-Link: speichert wie die normale Umfrage, aber mit `meta.source = "preview"` (normaler Link: `"live"`, ältere Einträge ohne Angabe gelten als normal). In `/admin` per „Quelle“ filterbar, Filter gilt auch für den Export. Am Ende Button „Neu starten“ für einen weiteren Durchlauf. |
 | `/admin` | Auswertung (Login per Supabase Auth, Selbst-Registrierung ist deaktiviert) |
 
 ## Dateien

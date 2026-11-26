@@ -13,7 +13,7 @@
       next: "Weiter", back: "Zurück", submit: "Absenden", start: "Los geht’s",
       required: "Pflicht", optional: "freiwillig", details: "Details", answerThis: "Bitte beantworten Sie diese Frage.", emailInvalid: "Bitte eine gültige E-Mail-Adresse angeben.",
       other: "Andere, und zwar …", otherPh: "Bitte kurz angeben", maxNote: (n, m) => `${n} von max. ${m} gewählt`, unknown: "Weiß ich nicht",
-      preview: "Vorschau · speichert nicht", offline: "Offline",
+      offline: "Offline",
       save: { pending: "Speichert …", error: "Nicht gespeichert", ok: "Gespeichert", idle: "Automatisch gespeichert" },
       dbDown: "Die Datenbank ist nicht erreichbar. Bitte laden Sie die Seite neu.",
       siteLang: "Sprache der Website", ready: "Ich bin bereit", preparing: "Seite wird vorbereitet …",
@@ -23,7 +23,7 @@
       timeUp: "Zeit ist um.", timeUpSub: "Die Seite ist ausgeblendet. Jetzt ein paar Fragen dazu.",
       reload: "Seite neu laden", gutter: "Ziehen, um die Breite zu ändern · Doppelklick: zurücksetzen", gutterAria: "Breite anpassen",
       siteTitle: "Website im Test", screenshot: "Screenshot",
-      previewEnd: "Vorschau: Es wurde nichts gespeichert.", restart: "Neu starten",
+      restart: "Neu starten",
       endErr: "Ihre letzten Antworten konnten nicht übertragen werden. Bitte prüfen Sie Ihre Verbindung.", retry: "Erneut senden", sent: "Übertragen. Danke!",
       newline: "Shift + Enter: neue Zeile", progress: (p) => `Fortschritt ${p} Prozent`,
       mic: "Antwort einsprechen", micStop: "Aufnahme beenden", micConnecting: "Mikrofon wird gestartet …", micRec: "Sprechen Sie einfach los. Zum Beenden aufs Mikrofon klicken.", micFinishing: "Text wird fertiggestellt …", micWaiting: "Verbindung wird aufgebaut … Sie können schon weitersprechen, es geht nichts verloren.",
@@ -33,7 +33,7 @@
       next: "Next", back: "Back", submit: "Submit", start: "Let’s start",
       required: "Required", optional: "optional", details: "Details", answerThis: "Please answer this question.", emailInvalid: "Please enter a valid email address.",
       other: "Other, namely …", otherPh: "Please specify", maxNote: (n, m) => `${n} of max. ${m} selected`, unknown: "I don't know",
-      preview: "Preview · not saved", offline: "Offline",
+      offline: "Offline",
       save: { pending: "Saving …", error: "Not saved", ok: "Saved", idle: "Saved automatically" },
       dbDown: "The database can't be reached. Please reload the page.",
       siteLang: "Website language", ready: "I'm ready", preparing: "Preparing the page …",
@@ -43,7 +43,7 @@
       timeUp: "Time's up.", timeUpSub: "The page is hidden. Now a few questions about it.",
       reload: "Reload page", gutter: "Drag to resize · double-click to reset", gutterAria: "Resize",
       siteTitle: "Website under test", screenshot: "Screenshot",
-      previewEnd: "Preview: nothing was saved.", restart: "Start over",
+      restart: "Start over",
       endErr: "Your latest answers couldn't be sent. Please check your connection.", retry: "Send again", sent: "Sent. Thank you!",
       newline: "Shift + Enter: new line", progress: (p) => `Progress ${p} percent`,
       mic: "Dictate your answer", micStop: "Stop recording", micConnecting: "Starting microphone …", micRec: "Just start talking. Click the microphone to stop.", micFinishing: "Finishing text …", micWaiting: "Connecting … keep talking, nothing gets lost.",
@@ -102,7 +102,7 @@
 
   // ── Backend ────────────────────────────────────────────────
   async function ensureParticipant() {
-    if (PREVIEW || state.participantId || !db) return;
+    if (state.participantId || !db) return;
     const { data, error } = await db.rpc("assign_participant", {
       p_anonymous_id: state.anonymousId,
       p_user_agent: null, // bewusst nicht gespeichert (keine personenbezogenen Daten)
@@ -116,6 +116,7 @@
     const att = steps.flatMap((s) => s.questions || []).find((q) => q.attention);
     return {
       ...state.meta,
+      source: PREVIEW ? "preview" : "live", // Vorschau-Link (?preview=1) oder normaler Link
       survey_lang: lang(),
       viewport: { w: window.innerWidth, h: window.innerHeight, dpr: window.devicePixelRatio || 1 },
       website_mode: websiteMode,
@@ -127,7 +128,7 @@
   }
 
   function saveProgress(complete = false) {
-    if (PREVIEW || !db) return Promise.resolve(true);
+    if (!db) return Promise.resolve(true);
     setSaveStatus("pending");
     saveChain = saveChain
       .catch(() => {})
@@ -163,7 +164,6 @@
   }
 
   function saveLabel() {
-    if (PREVIEW) return u().preview;
     if (!db) return u().offline;
     return u().save[saveStatus];
   }
@@ -744,7 +744,7 @@
         <p class="voice-links">${s.privacy.voice.links.map(([l, href]) => `<a href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(t(l))} ↗</a>`).join("")}</p></div>` : ""}</div>
       </details>` : ""}
       ${questionsHtml(s)}
-      ${!db && !PREVIEW ? `<div class="notice">${esc(u().dbDown)}</div>` : ""}`;
+      ${!db ? `<div class="notice">${esc(u().dbDown)}</div>` : ""}`;
   }
 
   function standardHtml(s) {
@@ -826,7 +826,7 @@
           <h1 class="headline">${esc(t(s.title))}</h1>
           <p class="lead">${esc(t(s.lead))}</p>
           <div data-end-status></div>
-          ${PREVIEW ? `<div class="notice info">${esc(u().previewEnd)} <button class="btn ghost" data-act="restart" type="button" style="margin-left:8px;height:38px">${esc(u().restart)}</button></div>` : ""}
+          ${PREVIEW ? `<div style="margin-top:18px"><button class="btn ghost" data-act="restart" type="button" style="height:38px">${esc(u().restart)}</button></div>` : ""}
         </div>
       </div>`;
   }

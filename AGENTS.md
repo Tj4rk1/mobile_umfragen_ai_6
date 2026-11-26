@@ -20,7 +20,7 @@ Teil des Uni-Projekts „Interdisziplinäres Projekt“ (Kolsetu / Elba, Markenw
 ## Prüfen
 
 - `for f in app/*.js; do node --check "$f"; done`
-- Lokal: `node --experimental-detect-module scripts/dev-server.mjs` (http://localhost:4173), Vorschau mit `/?preview=1`, damit nichts in Supabase landet.
+- Lokal: `node --experimental-detect-module scripts/dev-server.mjs` (http://localhost:4173), Achtung: auch `/?preview=1` speichert in Supabase (markiert als `meta.source = "preview"`, im Dashboard filterbar). Testdurchläufe landen also in der Datenbank.
 
 ## Website-Test (`startFivesec` in `app/survey.js`)
 

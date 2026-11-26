@@ -12,7 +12,11 @@
   }
 
   let root;
-  const ui = { tab: "fragen", onlyCompleted: false, openParticipant: null };
+  const ui = { tab: "fragen", onlyCompleted: false, source: "all", openParticipant: null };
+  // Herkunft: Vorschau-Link (?preview=1) oder normaler Link. Ältere Einträge ohne Angabe = normaler Link.
+  const SOURCES = { all: "Alle", live: "Nur normaler Link", preview: "Nur Vorschau-Link" };
+  const sourceOf = (p) => (p.meta?.source === "preview" ? "preview" : "live");
+  const sourcePill = (p) => (sourceOf(p) === "preview" ? `<span class="pill warn">Vorschau</span>` : `<span class="pill">normal</span>`);
   let data = { participants: [], responses: [], contacts: [] };
 
   async function fetchAll(table, select = "*") {
@@ -43,8 +47,12 @@
   }
 
   // ── Derived ────────────────────────────────────────────────
+  function sourceParticipants() {
+    return data.participants.filter((p) => ui.source === "all" || sourceOf(p) === ui.source);
+  }
+
   function visibleParticipants() {
-    return data.participants.filter((p) => !ui.onlyCompleted || p.status === "completed");
+    return sourceParticipants().filter((p) => !ui.onlyCompleted || p.status === "completed");
   }
 
   function answersByParticipant() {
@@ -110,7 +118,7 @@
   }
 
   function kpisHtml() {
-    const all = data.participants;
+    const all = sourceParticipants();
     const done = all.filter((p) => p.status === "completed");
     const durs = done.map(duration).filter(Boolean);
     const live = all.filter((p) => p.meta?.fivesec?.mode === "live").length;
@@ -130,6 +138,9 @@
       <h1 class="headline">Was die Leute <em>wirklich</em> denken.</h1>
       ${kpisHtml()}
       <div class="toolbar">
+        <label>Quelle <select data-filter="source" style="margin-left:6px;height:34px;border:1px solid var(--line);border-radius:10px;background:var(--card);padding:0 8px;font:inherit">${Object.entries(SOURCES)
+          .map(([v, t]) => `<option value="${v}" ${ui.source === v ? "selected" : ""}>${t} (${v === "all" ? data.participants.length : data.participants.filter((p) => sourceOf(p) === v).length})</option>`)
+          .join("")}</select></label>
         <label><input type="checkbox" data-filter="completed" ${ui.onlyCompleted ? "checked" : ""}> Nur abgeschlossene</label>
         <button class="btn ghost" data-act="refresh" type="button" style="height:38px;padding:0 16px">↻ Aktualisieren</button>
       </div>`;
@@ -250,12 +261,13 @@
     const list = visibleParticipants();
     if (!list.length) return `<div class="empty">Noch keine Teilnehmenden.</div>`;
     return `<div class="admin-table-wrap"><table class="pt">
-      <thead><tr><th>ID</th><th>Gestartet</th><th>Status</th><th>Dauer</th><th>Rolle · Branche</th><th>Kontakt</th><th>Sprache</th><th>Check</th><th>Website</th><th>Zuletzt</th></tr></thead>
+      <thead><tr><th>ID</th><th>Quelle</th><th>Gestartet</th><th>Status</th><th>Dauer</th><th>Rolle · Branche</th><th>Kontakt</th><th>Sprache</th><th>Check</th><th>Website</th><th>Zuletzt</th></tr></thead>
       <tbody>${list
         .map((p) => {
           const a = byP.get(p.id) || {};
           return `<tr class="click" data-open="${p.id}">
             <td class="mono">${shortId(p.id)}</td>
+            <td>${sourcePill(p)}</td>
             <td>${fmtDate(p.started_at)}</td>
             <td>${p.status === "completed" ? `<span class="pill ok">fertig</span>` : `<span class="pill warn">offen</span>`}</td>
             <td class="mono">${fmtDuration(duration(p))}</td>
@@ -285,7 +297,7 @@
       <div class="eyebrow">Teilnehmende ${shortId(p.id)}</div>
       <h1 class="headline" style="font-size:44px">${esc(personTag(a)) || "Ohne Angaben"}</h1>
       ${contactOf(p.id) ? `<div class="contact-box">Kontakt für Rückfragen: ${mailLink(contactOf(p.id))}</div>` : `<div class="stat-line">Kein Kontakt angegeben (anonym).</div>`}
-      <div class="stat-line">Gestartet ${fmtDate(p.started_at)} · ${p.status === "completed" ? "abgeschlossen nach " + fmtDuration(duration(p)) : "nicht abgeschlossen"}
+      <div class="stat-line">Quelle: ${sourceOf(p) === "preview" ? "Vorschau-Link" : "normaler Link"} · Gestartet ${fmtDate(p.started_at)} · ${p.status === "completed" ? "abgeschlossen nach " + fmtDuration(duration(p)) : "nicht abgeschlossen"}
       ${fs ? `<br>Website-Test: ${esc(fs.mode)}, Sprache ${esc(p.meta?.website_lang || "–")}, ${fs.shown_ms} ms gezeigt, Viewport ${fs.viewport?.w}×${fs.viewport?.h}` : ""}
       <br>Umfragesprache: ${esc(LANG_LABEL[p.meta?.survey_lang] || "–")} · Aufmerksamkeitscheck: ${p.meta?.attention_ok === true ? "bestanden" : p.meta?.attention_ok === false ? "nicht bestanden" : "–"}</div>
       <dl>${fields
@@ -307,11 +319,13 @@
   }
 
   function contactsHtml() {
-    if (!data.contacts.length) return `<div class="empty">Noch keine Kontaktangaben.</div>`;
+    const ids = new Set(sourceParticipants().map((p) => p.id));
+    const contacts = data.contacts.filter((c) => ids.has(c.participant_id));
+    if (!contacts.length) return `<div class="empty">Noch keine Kontaktangaben.</div>`;
     const byP = answersByParticipant();
     return `<p class="lead" style="font-size:16px">Freiwillig angegebene E-Mail-Adressen für Rückfragen. Klick auf eine Zeile öffnet die Antworten der Person.</p>
       <div class="admin-table-wrap"><table class="pt"><thead><tr><th>E-Mail</th><th>ID</th><th>Rolle · Branche</th><th>Status</th><th>Angegeben</th></tr></thead><tbody>
-      ${data.contacts
+      ${contacts
         .map((c) => {
           const p = data.participants.find((x) => x.id === c.participant_id);
           const a = byP.get(c.participant_id) || {};
@@ -322,7 +336,9 @@
   }
 
   function exportHtml() {
+    const n = visibleParticipants().length;
     return `
+      <div class="notice info" style="margin-bottom:18px">Der Export enthält, was oben gefiltert ist: <strong>${SOURCES[ui.source]}</strong>${ui.onlyCompleted ? ", nur abgeschlossene" : ""} (${n} ${n === 1 ? "Person" : "Personen"}). Quelle oben umstellen für alles, nur Vorschau-Link oder nur normalen Link.</div>
       <div class="acard"><div class="acard-head"><h3>Breit: eine Zeile pro Person</h3></div>
         <p class="empty" style="margin-top:0">Für Excel bzw. Numbers. Spalten = Fragen, mit Kontakt-E-Mail (falls angegeben), Dauer und Website-Test-Metadaten.</p>
         <button class="btn" data-act="csv-wide" type="button">CSV herunterladen</button></div>
@@ -353,12 +369,12 @@
   function exportWide() {
     const fields = answerFields();
     const byP = answersByParticipant();
-    const head = ["id", "kontakt_email", "status", "gestartet", "abgeschlossen", "dauer_min", "umfrage_sprache", "aufmerksamkeit_ok", "website_sprache", "fivesec_modus", "fivesec_ms", "viewport", ...fields.map((f) => (f.q.ref ? f.q.ref + " " : "") + f.key)];
+    const head = ["id", "quelle", "kontakt_email", "status", "gestartet", "abgeschlossen", "dauer_min", "umfrage_sprache", "aufmerksamkeit_ok", "website_sprache", "fivesec_modus", "fivesec_ms", "viewport", ...fields.map((f) => (f.q.ref ? f.q.ref + " " : "") + f.key)];
     const rows = visibleParticipants().map((p) => {
       const a = byP.get(p.id) || {};
       const d = duration(p);
       return [
-        shortId(p.id), contactOf(p.id), p.status, p.started_at, p.completed_at || "", d ? (d / 60000).toFixed(1).replace(".", ",") : "",
+        shortId(p.id), sourceOf(p) === "preview" ? "vorschau" : "normal", contactOf(p.id), p.status, p.started_at, p.completed_at || "", d ? (d / 60000).toFixed(1).replace(".", ",") : "",
         p.meta?.survey_lang || "", p.meta?.attention_ok === true ? "ja" : p.meta?.attention_ok === false ? "nein" : "",
         p.meta?.website_lang || "", p.meta?.fivesec?.mode || "", p.meta?.fivesec?.shown_ms || "",
         p.meta?.viewport ? `${p.meta.viewport.w}x${p.meta.viewport.h}` : "",
@@ -370,10 +386,11 @@
 
   function exportLong() {
     const ids = new Set(visibleParticipants().map((p) => p.id));
-    const head = ["id", "abschnitt", "frage_key", "frage", "antwort", "zahl", "zeit"];
+    const src = new Map(data.participants.map((p) => [p.id, sourceOf(p) === "preview" ? "vorschau" : "normal"]));
+    const head = ["id", "quelle", "abschnitt", "frage_key", "frage", "antwort", "zahl", "zeit"];
     const rows = data.responses
       .filter((r) => ids.has(r.participant_id))
-      .map((r) => [shortId(r.participant_id), r.construct, r.question_key, r.item_text, r.value, r.numeric_value ?? "", r.created_at]);
+      .map((r) => [shortId(r.participant_id), src.get(r.participant_id), r.construct, r.question_key, r.item_text, r.value, r.numeric_value ?? "", r.created_at]);
     download(`kolsetu-interviews-lang-${new Date().toISOString().slice(0, 10)}.csv`, csv([head, ...rows]));
   }
 
@@ -428,6 +445,7 @@
     });
     root.addEventListener("change", (e) => {
       if (e.target.dataset.filter === "completed") { ui.onlyCompleted = e.target.checked; render(); }
+      if (e.target.dataset.filter === "source") { ui.source = e.target.value; render(); }
     });
   }
 
