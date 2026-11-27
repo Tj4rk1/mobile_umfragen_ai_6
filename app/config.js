@@ -12,7 +12,7 @@ window.STUDY_CONFIG = {
   study: {
     title: { de: "Kundenservice im KI-Zeitalter", en: "Customer service in the age of AI" },
     institution: "Masterprojekt · Macromedia Hochschule",
-    minutes: 25,
+    minutes: 20,
   },
 
   website: {
